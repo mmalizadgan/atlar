@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load widget_tweaks humanize %}
+{% load widget_tweaks price_filters %}
 {% block title %}تکمیل سفارش | {{ site_settings.site_name }}{% endblock %}
 {% block content %}
 <div class="container py-4">
@@ -40,22 +40,22 @@
         {% for item in items %}
           <div class="d-flex justify-content-between small mb-2">
             <span>{{ item.variant.fabric.name }} — {{ item.variant.color_name }} × {{ item.quantity_meters }}م</span>
-            <span>{{ item.line_total|floatformat:0|intcomma }} تومان</span>
+            <span>{{ item.line_total|format_price }} تومان</span>
           </div>
         {% endfor %}
         <hr>
         <div class="d-flex justify-content-between small mb-2">
           <span class="text-muted">جمع کالاها</span>
-          <span>{{ cart.subtotal|floatformat:0|intcomma }} تومان</span>
+          <span>{{ cart.subtotal|format_price }} تومان</span>
         </div>
         <div class="d-flex justify-content-between small mb-2">
           <span class="text-muted">هزینه ارسال</span>
-          <span>{% if shipping_estimate %}{{ shipping_estimate|floatformat:0|intcomma }} تومان{% else %}رایگان{% endif %}</span>
+          <span>{% if shipping_estimate %}{{ shipping_estimate|format_price }} تومان{% else %}رایگان{% endif %}</span>
         </div>
         <hr>
         <div class="d-flex justify-content-between fw-bold">
           <span>جمع کل</span>
-          <span>{{ cart.subtotal|add:shipping_estimate|floatformat:0|intcomma }} تومان</span>
+          <span>{{ cart.subtotal|add:shipping_estimate|format_price }} تومان</span>
         </div>
       </div>
     </div>

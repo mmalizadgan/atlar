@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load price_filters %}
 {% block title %}{{ fabric.name }} | {{ site_settings.site_name }}{% endblock %}
 {% block meta_description %}{{ fabric.name }} - {{ fabric.category.name }} - {{ fabric.price_display }}{% endblock %}
 
@@ -27,7 +27,7 @@
     <div class="col-lg-6">
       <div class="text-muted small mb-1">{{ fabric.category.name }}</div>
       <h1 class="h3 mb-2">{{ fabric.name }}</h1>
-      <div class="h4 price-tag mb-3">{{ fabric.price_per_meter|floatformat:0|intcomma }}<span class="price-toman"></span></div>
+      <div class="h4 price-tag mb-3">{{ fabric.price_per_meter|format_price }}<span class="price-toman"></span></div>
 
       {% if fabric.description %}<p>{{ fabric.description }}</p>{% endif %}
 
@@ -36,18 +36,18 @@
           <label class="form-label small fw-bold d-block">
             رنگ: <span id="selectedColorName">{{ fabric.default_variant.color_name }}</span>
           </label>
-          <div class="d-flex gap-2 flex-wrap" id="variantSwatches">
+          <div class="d-flex gap-3 flex-wrap" id="variantSwatches">
             {% for v in variants %}
               <button type="button"
-                class="variant-swatch {% if forloop.first %}selected{% endif %} {% if not v.in_stock %}out-of-stock{% endif %}"
+                class="color-swatch-lg {% if forloop.first %}selected{% endif %} {% if not v.in_stock %}out-of-stock{% endif %}"
                 data-variant-id="{{ v.id }}"
                 data-color-name="{{ v.color_name }}"
                 data-stock="{{ v.stock_meters }}"
                 data-min="{{ fabric.min_order_meters }}"
                 data-image="{% if v.image %}{{ v.image.url }}{% endif %}"
                 data-gallery="{% for img in v.images.all %}{{ img.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                title="{{ v.color_name }}{% if not v.in_stock %} (ناموجود){% endif %}">
-                <span class="swatch-inner" style="background-color:{{ v.color_hex|default:'#ddd' }}; {% if v.image %}background-image:url('{{ v.image.url }}');{% endif %}"></span>
+                title="{{ v.color_name }}{% if not v.in_stock %} (ناموجود){% endif %}"
+                style="background-color:{{ v.color_hex|default:'#ddd' }};">
               </button>
             {% endfor %}
           </div>
@@ -128,7 +128,7 @@
   }
 
   function selectVariant(btn) {
-    document.querySelectorAll('.variant-swatch').forEach(function (b) { b.classList.remove('selected'); });
+    document.querySelectorAll('.color-swatch-lg').forEach(function (b) { b.classList.remove('selected'); });
     btn.classList.add('selected');
 
     var image = btn.getAttribute('data-image');
@@ -156,7 +156,7 @@
     }
   }
 
-  document.querySelectorAll('.variant-swatch').forEach(function (btn) {
+  document.querySelectorAll('.color-swatch-lg').forEach(function (btn) {
     btn.addEventListener('click', function () { selectVariant(btn); });
   });
 

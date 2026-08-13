@@ -1,4 +1,4 @@
-{% load static humanize %}
+{% load static price_filters %}
 <div class="fabric-card">
   <a href="{{ fabric.get_absolute_url }}" class="text-decoration-none">
     <div class="fabric-thumb-wrap position-relative">
@@ -28,7 +28,7 @@
           </div>
         {% endif %}
       {% endwith %}
-      <div class="price-tag">{{ fabric.price_per_meter|floatformat:0|intcomma }}<span class="price-toman"></span></div>
+      <div class="price-tag">{{ fabric.price_per_meter|format_price }}<span class="price-toman"></span></div>
     </div>
   </a>
 </div>
