@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}سفارش‌های من | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="section-title h3">سفارش‌های من</h1>
+  {% if orders %}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr class="text-muted small">
+            <th>شماره سفارش</th><th>تاریخ</th><th>وضعیت</th><th>مبلغ</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+            <tr>
+              <td dir="ltr" class="text-end">{{ order.order_number }}</td>
+              <td>{{ order.created_at|date:"Y/m/d H:i" }}</td>
+              <td><span class="badge bg-light text-dark border">{{ order.get_status_display }}</span></td>
+              <td>{{ order.total|floatformat:0 }} تومان</td>
+              <td><a href="{% url 'orders:detail' order.order_number %}" class="btn btn-sm btn-outline-navy">جزئیات</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">هنوز سفارشی ثبت نکردی.</p>
+    <a href="{% url 'products:fabric_list' %}" class="btn btn-navy">مشاهده پارچه‌ها</a>
+  {% endif %}
+</div>
+{% endblock %}

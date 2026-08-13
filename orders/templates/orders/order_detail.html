@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}سفارش {{ order.order_number }} | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="section-title h3">سفارش <bdi dir="ltr">{{ order.order_number }}</bdi></h1>
+  <span class="badge bg-light text-dark border mb-4">{{ order.get_status_display }}</span>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <h2 class="h6 fw-bold mb-3">اقلام سفارش</h2>
+      {% for item in order.items.all %}
+        <div class="d-flex justify-content-between border-bottom py-2 small">
+          <span>{{ item.display_name }} × {{ item.quantity_meters }}م</span>
+          <span>{{ item.line_total|floatformat:0 }} تومان</span>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="col-lg-5">
+      <div class="fabric-card p-4">
+        <h2 class="h6 fw-bold mb-3">اطلاعات ارسال</h2>
+        <p class="small mb-1">{{ order.full_name }} — <bdi dir="ltr">{{ order.phone_number }}</bdi></p>
+        <p class="small text-muted mb-3">{{ order.city }}، {{ order.address_line }}</p>
+        <hr>
+        <div class="d-flex justify-content-between small mb-1"><span class="text-muted">جمع کالاها</span><span>{{ order.subtotal|floatformat:0 }} تومان</span></div>
+        <div class="d-flex justify-content-between small mb-1"><span class="text-muted">هزینه ارسال</span><span>{{ order.shipping_cost|floatformat:0 }} تومان</span></div>
+        <hr>
+        <div class="d-flex justify-content-between fw-bold"><span>جمع کل</span><span>{{ order.total|floatformat:0 }} تومان</span></div>
+
+        {% if order.status == 'pending_payment' %}
+          <a href="{% url 'payments:initiate' order.order_number %}" class="btn btn-gold w-100 mt-3">پرداخت</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

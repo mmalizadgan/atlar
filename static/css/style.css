@@ -1,0 +1,318 @@
+/* ==========================================================================
+   آتلار — سیستم طراحی
+   پالت سرمه‌ای/طلایی برگرفته از هویت برند. فونت وزیرمتن (وریابل، لوکال).
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn[wght].woff2') format('woff2-variations'),
+       url('../fonts/Vazirmatn[wght].woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+:root {
+  /* پالت اصلی — دقیقاً از روی لوگوی برند نمونه‌برداری شده (آبی‌طاووسی/سرمه‌ای + طلایی) */
+  --navy-950: #04324a;
+  --navy-900: #0e4e70;
+  --navy-800: #185f87;
+  --navy-700: #23739e;
+  --navy-600: #3688b3;
+
+  --gold-600: #a87b34;
+  --gold-500: #c69a4e;
+  --gold-400: #dbbd7e;
+  --gold-300: #eedcae;
+
+  --cream-100: #fbf9f5;
+  --cream-200: #f3ede0;
+
+  --ink-900: #1b1a17;
+  --muted-600: #6c6558;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-soft: 0 10px 30px -12px rgba(10, 21, 38, .25);
+  --shadow-lift: 0 16px 40px -14px rgba(10, 21, 38, .35);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+  background-color: var(--cream-100);
+  color: var(--ink-900);
+  line-height: 1.85;
+  font-size: 1rem;
+}
+
+h1, h2, h3, h4, h5, .display-headline {
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--navy-900);
+}
+
+a {
+  color: var(--navy-800);
+  text-decoration: none;
+}
+a:hover { color: var(--gold-600); }
+
+::selection { background: var(--gold-300); color: var(--navy-950); }
+
+/* ---------- دکمه‌ها ---------- */
+.btn { border-radius: var(--radius-sm); font-weight: 600; padding: .65rem 1.4rem; }
+
+.btn-gold {
+  background-color: var(--gold-500);
+  border-color: var(--gold-500);
+  color: var(--navy-950);
+}
+.btn-gold:hover, .btn-gold:focus {
+  background-color: var(--gold-400);
+  border-color: var(--gold-400);
+  color: var(--navy-950);
+}
+
+.btn-navy {
+  background-color: var(--navy-900);
+  border-color: var(--navy-900);
+  color: var(--cream-100);
+}
+.btn-navy:hover, .btn-navy:focus {
+  background-color: var(--navy-700);
+  border-color: var(--navy-700);
+  color: var(--cream-100);
+}
+
+.btn-outline-navy {
+  border: 1.5px solid var(--navy-800);
+  color: var(--navy-900);
+  background: transparent;
+}
+.btn-outline-navy:hover { background: var(--navy-900); color: var(--cream-100); }
+
+/* ---------- نویگیشن ---------- */
+.site-navbar {
+  background-color: var(--navy-950);
+  border-bottom: 1px solid rgba(198, 161, 91, .25);
+}
+.site-navbar .navbar-brand {
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--gold-400) !important;
+  letter-spacing: .02em;
+  padding-block: 0;
+}
+.site-navbar .navbar-brand img {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+.footer-logo { height: 40px; width: auto; }
+.site-navbar .nav-link {
+  color: var(--cream-200) !important;
+  font-weight: 500;
+  padding-inline: .9rem !important;
+}
+.site-navbar .nav-link:hover,
+.site-navbar .nav-link.active { color: var(--gold-400) !important; }
+
+.cart-badge {
+  background: var(--gold-500);
+  color: var(--navy-950);
+  font-weight: 700;
+  font-size: .7rem;
+}
+
+/* ---------- هیرو ---------- */
+.hero {
+  position: relative;
+  background: radial-gradient(120% 140% at 100% 0%, var(--navy-800) 0%, var(--navy-950) 60%);
+  color: var(--cream-100);
+  overflow: hidden;
+  padding-block: 5rem;
+}
+.hero::before {
+  /* بافت ظریفِ یادآور تار و پود پارچه، بدون شلوغ‌کاری */
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: .07;
+  background-image:
+    repeating-linear-gradient(45deg, var(--gold-300) 0 2px, transparent 2px 26px),
+    repeating-linear-gradient(-45deg, var(--gold-300) 0 2px, transparent 2px 26px);
+  pointer-events: none;
+}
+.hero-content { position: relative; z-index: 1; }
+.hero h1 { color: var(--cream-100); font-size: clamp(1.9rem, 4vw, 3.1rem); }
+.hero .lead { color: var(--cream-200); opacity: .9; font-size: 1.15rem; }
+
+.hero-wave {
+  display: block;
+  width: 100%;
+  height: 48px;
+  fill: var(--cream-100);
+  margin-bottom: -1px;
+}
+
+/* ---------- کارت دسته‌بندی / پارچه ---------- */
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem 1.1rem;
+  border-radius: 999px;
+  background: var(--cream-200);
+  color: var(--navy-800);
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: .15s;
+}
+.category-chip:hover, .category-chip.active {
+  background: var(--navy-900);
+  color: var(--gold-400);
+}
+
+.fabric-card {
+  background: #fff;
+  border: 1px solid rgba(15, 30, 51, .08);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease;
+  height: 100%;
+}
+.fabric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+.fabric-card .fabric-thumb-wrap {
+  aspect-ratio: 4/3;
+  background: var(--cream-200);
+  overflow: hidden;
+}
+.fabric-card .fabric-thumb-wrap img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform .3s ease;
+}
+.fabric-card:hover .fabric-thumb-wrap img { transform: scale(1.05); }
+.fabric-card .price-tag {
+  color: var(--gold-600);
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+.badge-featured {
+  background: var(--gold-500);
+  color: var(--navy-950);
+  font-weight: 700;
+}
+.badge-stock-low { background: #7a3b1a; color: #fff; }
+.badge-out { background: #6c6558; color: #fff; }
+
+.color-dot {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(15,30,51,.15);
+}
+
+.variant-swatch {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  border: 2px solid rgba(15,30,51,.2);
+  padding: 2px;
+  cursor: pointer;
+  background: transparent;
+  box-shadow: 0 2px 6px rgba(15,30,51,.2);
+  transition: .15s;
+  flex-shrink: 0;
+}
+.variant-swatch .swatch-inner {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(15,30,51,.1);
+}
+.variant-swatch.selected { border-color: var(--gold-500); box-shadow: 0 2px 8px rgba(166,123,52,.4); transform: scale(1.1); }
+.variant-swatch.out-of-stock { opacity: .4; }
+.variant-swatch.out-of-stock .swatch-inner::after { content: '✕'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #d32f2f; font-weight: bold; }
+
+/* ---------- فرم‌ها / صفحه ورود OTP ---------- */
+.auth-shell {
+  min-height: calc(100vh - 300px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: 3rem;
+}
+.auth-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 2.2rem;
+  max-width: 420px;
+  width: 100%;
+}
+.otp-input {
+  font-size: 1.9rem;
+  letter-spacing: .6rem;
+  font-weight: 700;
+}
+.form-control, .form-select {
+  border-radius: var(--radius-sm);
+  border-color: rgba(15, 30, 51, .18);
+  padding-block: .6rem;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--gold-500);
+  box-shadow: 0 0 0 .2rem rgba(198, 161, 91, .25);
+}
+
+/* ---------- فوتر ---------- */
+.site-footer {
+  background: var(--navy-950);
+  color: var(--cream-200);
+  padding-block: 3rem 1.5rem;
+}
+.site-footer h6 { color: var(--gold-400); font-weight: 700; margin-bottom: 1rem; }
+.site-footer a { color: var(--cream-200); }
+.site-footer a:hover { color: var(--gold-400); }
+.site-footer hr { border-color: rgba(255,255,255,.12); }
+
+/* ---------- عمومی ---------- */
+.section-title {
+  position: relative;
+  display: inline-block;
+  padding-bottom: .6rem;
+  margin-bottom: 2rem;
+}
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0; inset-inline-start: 0;
+  width: 46px; height: 3px;
+  background: var(--gold-500);
+  border-radius: 3px;
+}
+
+.price-toman::after { content: ' تومان'; font-size: .8em; font-weight: 500; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--cream-200) 25%, #eee 37%, var(--cream-200) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.4s ease infinite;
+}
+@keyframes skeleton-loading {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (max-width: 767.98px) {
+  .hero { padding-block: 3rem; }
+  .auth-card { padding: 1.5rem; }
+}

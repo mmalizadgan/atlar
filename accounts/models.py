@@ -1,0 +1,116 @@
+import random
+from datetime import timedelta
+
+from django.conf import settings
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import PermissionsMixin
+from django.core.validators import RegexValidator
+from django.db import models
+from django.utils import timezone
+
+phone_validator = RegexValidator(
+    regex=r'^09\d{9}$',
+    message='شماره موبایل باید به فرم ۰۹xxxxxxxxx وارد شود.',
+)
+
+
+class UserManager(BaseUserManager):
+    use_in_migrations = True
+
+    def _create_user(self, phone_number, password, **extra_fields):
+        if not phone_number:
+            raise ValueError('شماره موبایل الزامی است.')
+        user = self.model(phone_number=phone_number, **extra_fields)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, phone_number, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        return self._create_user(phone_number, password, **extra_fields)
+
+    def create_superuser(self, phone_number, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('ادمین باید is_staff=True داشته باشد.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('ادمین باید is_superuser=True داشته باشد.')
+        return self._create_user(phone_number, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    """
+    کاربر با شماره موبایل به‌عنوان شناسه اصلی.
+    مشتری‌ها با OTP وارد می‌شوند (رمز عبور استفاده نمی‌شود)،
+    ادمین‌ها با شماره موبایل + رمز عبور وارد پنل مدیریت می‌شوند.
+    """
+    phone_number = models.CharField(
+        max_length=11, unique=True, validators=[phone_validator], verbose_name='شماره موبایل'
+    )
+    first_name = models.CharField(max_length=60, blank=True, verbose_name='نام')
+    last_name = models.CharField(max_length=60, blank=True, verbose_name='نام خانوادگی')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    is_staff = models.BooleanField(default=False, verbose_name='دسترسی به پنل مدیریت')
+    date_joined = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ عضویت')
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'phone_number'
+    REQUIRED_FIELDS = []
+
+    class Meta:
+        verbose_name = 'کاربر'
+        verbose_name_plural = 'کاربران'
+
+    def __str__(self):
+        full_name = self.get_full_name()
+        return f'{full_name} ({self.phone_number})' if full_name else self.phone_number
+
+    def get_full_name(self):
+        return f'{self.first_name} {self.last_name}'.strip()
+
+    def get_short_name(self):
+        return self.first_name or self.phone_number
+
+
+def generate_otp_code():
+    length = getattr(settings, 'OTP_CODE_LENGTH', 5)
+    return ''.join(random.choices('0123456789', k=length))
+
+
+def default_expiry():
+    seconds = getattr(settings, 'OTP_EXPIRY_SECONDS', 120)
+    return timezone.now() + timedelta(seconds=seconds)
+
+
+class OTP(models.Model):
+    """کد یک‌بارمصرف پیامکی برای ورود/ثبت‌نام با شماره موبایل."""
+    phone_number = models.CharField(max_length=11, validators=[phone_validator], db_index=True)
+    code = models.CharField(max_length=8, default=generate_otp_code)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=default_expiry)
+    is_used = models.BooleanField(default=False)
+    attempts = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'کد یکبار مصرف'
+        verbose_name_plural = 'کدهای یکبار مصرف'
+        indexes = [models.Index(fields=['phone_number', 'is_used', 'expires_at'])]
+
+    def __str__(self):
+        return f'{self.phone_number} - {self.code}'
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self):
+        max_attempts = getattr(settings, 'OTP_MAX_ATTEMPTS', 5)
+        return not self.is_used and not self.is_expired and self.attempts < max_attempts

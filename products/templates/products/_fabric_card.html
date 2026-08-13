@@ -1,0 +1,34 @@
+{% load static %}
+<div class="fabric-card">
+  <a href="{{ fabric.get_absolute_url }}" class="text-decoration-none">
+    <div class="fabric-thumb-wrap position-relative">
+      {% with variant=fabric.default_variant %}
+        {% if variant and variant.image %}
+          <img src="{{ variant.image.url }}" alt="{{ fabric.name }} - {{ variant.color_name }}" loading="lazy" width="400" height="300">
+        {% else %}
+          <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted small">بدون تصویر</div>
+        {% endif %}
+      {% endwith %}
+      {% if fabric.is_featured %}
+        <span class="badge badge-featured position-absolute top-0 start-0 m-2">ویژه</span>
+      {% elif not fabric.in_stock %}
+        <span class="badge badge-out position-absolute top-0 start-0 m-2">ناموجود</span>
+      {% endif %}
+    </div>
+    <div class="p-3">
+      <div class="text-muted small mb-1">{{ fabric.category.name }}</div>
+      <div class="fw-bold text-dark mb-1">{{ fabric.name }}</div>
+      {% with variants=fabric.active_variants %}
+        {% if variants|length > 1 %}
+          <div class="d-flex gap-1 mb-2">
+            {% for v in variants|slice:":6" %}
+              <span class="color-dot" style="background-color:{{ v.color_hex|default:'#ccc' }};" title="{{ v.color_name }}"></span>
+            {% endfor %}
+            {% if variants|length > 6 %}<span class="small text-muted">+{{ variants|length|add:"-6" }}</span>{% endif %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      <div class="price-tag">{{ fabric.price_per_meter|floatformat:0 }}<span class="price-toman"></span></div>
+    </div>
+  </a>
+</div>

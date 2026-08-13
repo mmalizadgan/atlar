@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}سبد خرید | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="section-title h3">سبد خرید</h1>
+
+  {% if items %}
+    <div class="row g-4">
+      <div class="col-lg-8">
+        {% for item in items %}
+          <div class="d-flex gap-3 align-items-center border-bottom py-3">
+            <a href="{{ item.variant.fabric.get_absolute_url }}" class="flex-shrink-0">
+              {% if item.variant.image %}
+                <img src="{{ item.variant.image.url }}" alt="{{ item.variant.fabric.name }}" style="width:84px;height:84px;object-fit:cover;border-radius:10px;" loading="lazy">
+              {% else %}
+                <div style="width:84px;height:84px;border-radius:10px;background:var(--cream-200);"></div>
+              {% endif %}
+            </a>
+            <div class="flex-grow-1">
+              <a href="{{ item.variant.fabric.get_absolute_url }}" class="fw-bold text-dark d-block mb-1">{{ item.variant.fabric.name }} — {{ item.variant.color_name }}</a>
+              <div class="text-muted small mb-2">{{ item.variant.fabric.price_per_meter|floatformat:0 }} تومان / متر</div>
+              <form method="post" action="{% url 'cart:update' item.id %}" class="d-flex gap-2 align-items-center">
+                {% csrf_token %}
+                <input type="number" name="quantity_meters" value="{{ item.quantity_meters }}"
+                       min="{{ item.variant.fabric.min_order_meters }}" max="{{ item.variant.stock_meters }}" step="0.1"
+                       class="form-control form-control-sm" style="width:90px;">
+                <button type="submit" class="btn btn-sm btn-outline-navy">به‌روزرسانی</button>
+              </form>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold mb-2">{{ item.line_total|floatformat:0 }} تومان</div>
+              <form method="post" action="{% url 'cart:remove' item.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-link text-danger p-0">حذف</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="col-lg-4">
+        <div class="fabric-card p-4">
+          <h2 class="h6 fw-bold mb-3">خلاصه سفارش</h2>
+          <div class="d-flex justify-content-between small mb-2">
+            <span class="text-muted">جمع کالاها</span>
+            <span>{{ cart.subtotal|floatformat:0 }} تومان</span>
+          </div>
+          <div class="d-flex justify-content-between small text-muted mb-3">
+            <span>هزینه ارسال در مرحله بعد محاسبه می‌شود</span>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between fw-bold mb-3">
+            <span>جمع کل</span>
+            <span>{{ cart.subtotal|floatformat:0 }} تومان</span>
+          </div>
+          <a href="{% url 'orders:checkout' %}" class="btn btn-gold w-100">ادامه و تکمیل سفارش</a>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <p class="text-muted mb-3">سبد خریدت خالیه.</p>
+      <a href="{% url 'products:fabric_list' %}" class="btn btn-navy">مشاهده پارچه‌ها</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

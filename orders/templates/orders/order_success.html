@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}سفارش ثبت شد | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="mb-3" style="font-size:3rem;">🎉</div>
+  <h1 class="h3 mb-2">سفارشت با موفقیت ثبت شد!</h1>
+  <p class="text-muted mb-4">شماره سفارش: <bdi class="fw-bold" dir="ltr">{{ order.order_number }}</bdi></p>
+  <a href="{% url 'orders:detail' order.order_number %}" class="btn btn-navy">مشاهده جزئیات سفارش</a>
+  <a href="{% url 'products:fabric_list' %}" class="btn btn-outline-navy">ادامه خرید</a>
+</div>
+{% endblock %}

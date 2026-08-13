@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}حساب کاربری | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <h1 class="section-title h4">حساب کاربری</h1>
+      <div class="mb-4">
+        <span class="text-muted small">شماره موبایل</span>
+        <div class="fw-bold" dir="ltr">{{ user.phone_number }}</div>
+      </div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">{{ form.first_name.label }}</label>
+          {% render_field form.first_name %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ form.last_name.label }}</label>
+          {% render_field form.last_name %}
+        </div>
+        <button type="submit" class="btn btn-navy">ذخیره تغییرات</button>
+        <a href="{% url 'orders:history' %}" class="btn btn-outline-navy">سفارش‌های من</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

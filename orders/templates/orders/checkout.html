@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}تکمیل سفارش | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="section-title h3">تکمیل سفارش</h1>
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">{{ form.full_name.label }}</label>
+          {% render_field form.full_name %}
+          {% if form.full_name.errors %}<div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ form.phone_number.label }}</label>
+          {% render_field form.phone_number %}
+          {% if form.phone_number.errors %}<div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ form.city.label }}</label>
+          {% render_field form.city %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ form.address_line.label }}</label>
+          {% render_field form.address_line %}
+        </div>
+        <div class="mb-4">
+          <label class="form-label">{{ form.postal_code.label }} <span class="text-muted small">(اختیاری)</span></label>
+          {% render_field form.postal_code %}
+        </div>
+        <button type="submit" class="btn btn-gold w-100 py-2">پرداخت با بله‌پی</button>
+      </form>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="fabric-card p-4">
+        <h2 class="h6 fw-bold mb-3">سفارش شما</h2>
+        {% for item in items %}
+          <div class="d-flex justify-content-between small mb-2">
+            <span>{{ item.variant.fabric.name }} — {{ item.variant.color_name }} × {{ item.quantity_meters }}م</span>
+            <span>{{ item.line_total|floatformat:0 }} ت</span>
+          </div>
+        {% endfor %}
+        <hr>
+        <div class="d-flex justify-content-between small mb-2">
+          <span class="text-muted">جمع کالاها</span>
+          <span>{{ cart.subtotal|floatformat:0 }} تومان</span>
+        </div>
+        <div class="d-flex justify-content-between small mb-2">
+          <span class="text-muted">هزینه ارسال</span>
+          <span>{% if shipping_estimate %}{{ shipping_estimate|floatformat:0 }} تومان{% else %}رایگان{% endif %}</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between fw-bold">
+          <span>جمع کل</span>
+          <span>{{ cart.subtotal|add:shipping_estimate|floatformat:0 }} تومان</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

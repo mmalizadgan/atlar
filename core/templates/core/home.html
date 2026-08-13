@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<section class="hero">
+  <div class="container hero-content">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <h1 class="fw-bold mb-3">{{ site_settings.tagline }}</h1>
+        <p class="lead mb-4">پارچه‌های مبلی باکیفیت با تنوع رنگ و طرح، مناسب برای مبلمان خانگی و پروژه‌های دکوراسیون. سفارش آسان، ارسال به سراسر کشور.</p>
+        <a href="{% url 'products:fabric_list' %}" class="btn btn-gold btn-lg px-4">مشاهده پارچه‌ها</a>
+        <a href="{% url 'core:about' %}" class="btn btn-outline-navy btn-lg px-4 ms-2" style="border-color: rgba(255,255,255,.4); color:#fff;">درباره آتلار</a>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block text-center">
+        <img src="{% static 'img/atlar-logo-full.webp' %}" alt="{{ site_settings.site_name }}" class="img-fluid" style="max-height:320px;" width="450" height="290">
+      </div>
+    </div>
+  </div>
+  <svg class="hero-wave" viewBox="0 0 1440 48" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,32 C240,0 480,48 720,32 C960,16 1200,48 1440,16 L1440,48 L0,48 Z"></path>
+  </svg>
+</section>
+
+{% if categories %}
+<section class="container py-4">
+  <div class="d-flex flex-wrap gap-2 justify-content-center">
+    {% for category in categories %}
+      <a href="{{ category.get_absolute_url }}" class="category-chip">{{ category.name }}</a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="container py-4 pb-5">
+  <h2 class="section-title h3">پارچه‌های ویژه</h2>
+  <div class="row g-4">
+    {% for fabric in featured_fabrics %}
+      <div class="col-6 col-md-4 col-lg-3">
+        {% include "products/_fabric_card.html" %}
+      </div>
+    {% empty %}
+      <p class="text-muted">هنوز پارچه‌ای ثبت نشده — از پنل مدیریت اضافه کن.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

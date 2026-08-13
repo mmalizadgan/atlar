@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}{{ fabric.name }} | {{ site_settings.site_name }}{% endblock %}
+{% block meta_description %}{{ fabric.name }} - {{ fabric.category.name }} - {{ fabric.price_display }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <nav class="small text-muted mb-3">
+    <a href="{% url 'core:home' %}">خانه</a> /
+    <a href="{% url 'products:fabric_list' %}">پارچه‌ها</a> /
+    <a href="{{ fabric.category.get_absolute_url }}">{{ fabric.category.name }}</a> /
+    <span class="text-dark">{{ fabric.name }}</span>
+  </nav>
+
+  <div class="row g-5">
+    <div class="col-lg-6">
+      <div class="fabric-thumb-wrap rounded-4 mb-3" style="aspect-ratio:1;">
+        {% if fabric.default_variant.image %}
+          <img src="{{ fabric.default_variant.image.url }}" alt="{{ fabric.name }}" class="w-100 h-100" style="object-fit:cover;" id="mainImage">
+        {% else %}
+          <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" id="mainImagePlaceholder">بدون تصویر</div>
+        {% endif %}
+      </div>
+      <div class="d-flex gap-2 flex-wrap" id="galleryStrip"></div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="text-muted small mb-1">{{ fabric.category.name }}</div>
+      <h1 class="h3 mb-2">{{ fabric.name }}</h1>
+      <div class="h4 price-tag mb-3">{{ fabric.price_per_meter|floatformat:0 }}<span class="price-toman"></span></div>
+
+      {% if fabric.description %}<p>{{ fabric.description }}</p>{% endif %}
+
+      {% if variants %}
+        <div class="mb-4">
+          <label class="form-label small fw-bold d-block">
+            رنگ: <span id="selectedColorName">{{ fabric.default_variant.color_name }}</span>
+          </label>
+          <div class="d-flex gap-2 flex-wrap" id="variantSwatches">
+            {% for v in variants %}
+              <button type="button"
+                class="variant-swatch {% if forloop.first %}selected{% endif %} {% if not v.in_stock %}out-of-stock{% endif %}"
+                data-variant-id="{{ v.id }}"
+                data-color-name="{{ v.color_name }}"
+                data-stock="{{ v.stock_meters }}"
+                data-min="{{ fabric.min_order_meters }}"
+                data-image="{% if v.image %}{{ v.image.url }}{% endif %}"
+                data-gallery="{% for img in v.images.all %}{{ img.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                title="{{ v.color_name }}{% if not v.in_stock %} (ناموجود){% endif %}">
+                <span class="swatch-inner" style="background-color:{{ v.color_hex|default:'#ddd' }}; {% if v.image %}background-image:url('{{ v.image.url }}');{% endif %}"></span>
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <table class="table table-sm mb-4">
+        <tbody>
+          {% if fabric.pattern %}<tr><th class="text-muted fw-normal">طرح</th><td>{{ fabric.pattern }}</td></tr>{% endif %}
+          {% if fabric.material %}<tr><th class="text-muted fw-normal">جنس</th><td>{{ fabric.material }}</td></tr>{% endif %}
+          <tr><th class="text-muted fw-normal">عرض رول</th><td>{{ fabric_width_cm }} سانتی‌متر</td></tr>
+          {% if fabric.abrasion_rating %}<tr><th class="text-muted fw-normal">مقاومت سایش (مارتیندل)</th><td>{{ fabric.abrasion_rating }}</td></tr>{% endif %}
+          <tr><th class="text-muted fw-normal">ضد حریق</th><td>{% if fabric.is_fire_retardant %}بله{% else %}خیر{% endif %}</td></tr>
+          <tr><th class="text-muted fw-normal">قابل شست‌وشو</th><td>{% if fabric.is_washable %}بله{% else %}خیر{% endif %}</td></tr>
+          <tr><th class="text-muted fw-normal">موجودی</th><td id="stockDisplay">{% if fabric.default_variant.in_stock %}{{ fabric.default_variant.stock_meters }} متر{% else %}<span class="text-danger">ناموجود</span>{% endif %}</td></tr>
+        </tbody>
+      </table>
+
+      {% if fabric.in_stock %}
+        <form method="post" action="{% url 'cart:add' fabric.slug %}" class="d-flex gap-2 align-items-end" id="addToCartForm">
+          {% csrf_token %}
+          <input type="hidden" name="variant_id" id="variantIdInput" value="{{ fabric.default_variant.id }}">
+          <div>
+            <label class="form-label small mb-1">مقدار (متر)</label>
+            <input type="number" name="quantity_meters" id="quantityInput" class="form-control" style="width:110px;"
+                   value="{{ fabric.min_order_meters }}" min="{{ fabric.min_order_meters }}"
+                   max="{{ fabric.default_variant.stock_meters }}" step="0.1">
+          </div>
+          <button type="submit" class="btn btn-gold px-4" id="addToCartBtn">افزودن به سبد خرید</button>
+        </form>
+        <p class="small text-muted mt-2">حداقل سفارش: {{ fabric.min_order_meters }} متر</p>
+      {% else %}
+        <button class="btn btn-secondary" disabled>ناموجود</button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if related_fabrics %}
+    <section class="mt-5 pt-4">
+      <h2 class="section-title h4">پارچه‌های مشابه</h2>
+      <div class="row g-4">
+        {% for related in related_fabrics %}
+          <div class="col-6 col-md-3">
+            {% include "products/_fabric_card.html" with fabric=related %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  var mainImage = document.getElementById('mainImage');
+  var galleryStrip = document.getElementById('galleryStrip');
+  var colorNameEl = document.getElementById('selectedColorName');
+  var stockDisplay = document.getElementById('stockDisplay');
+  var variantIdInput = document.getElementById('variantIdInput');
+  var quantityInput = document.getElementById('quantityInput');
+  var addToCartBtn = document.getElementById('addToCartBtn');
+
+  function buildGallery(mainSrc, extraCsv) {
+    galleryStrip.innerHTML = '';
+    var urls = [];
+    if (mainSrc) urls.push(mainSrc);
+    if (extraCsv) {
+      extraCsv.split(',').forEach(function (u) { if (u) urls.push(u); });
+    }
+    urls.forEach(function (url) {
+      var img = document.createElement('img');
+      img.src = url;
+      img.loading = 'lazy';
+      img.className = 'rounded-3 gallery-thumb';
+      img.style.cssText = 'width:72px;height:72px;object-fit:cover;cursor:pointer;';
+      img.addEventListener('click', function () { mainImage.src = url; });
+      galleryStrip.appendChild(img);
+    });
+  }
+
+  function selectVariant(btn) {
+    document.querySelectorAll('.variant-swatch').forEach(function (b) { b.classList.remove('selected'); });
+    btn.classList.add('selected');
+
+    var image = btn.getAttribute('data-image');
+    if (mainImage && image) mainImage.src = image;
+    buildGallery(image, btn.getAttribute('data-gallery'));
+
+    colorNameEl.textContent = btn.getAttribute('data-color-name');
+    variantIdInput.value = btn.getAttribute('data-variant-id');
+
+    var stock = parseFloat(btn.getAttribute('data-stock'));
+    var min = parseFloat(btn.getAttribute('data-min'));
+    if (stock > 0) {
+      stockDisplay.innerHTML = stock + ' متر';
+      quantityInput.max = stock;
+      quantityInput.min = min;
+      quantityInput.value = min;
+      quantityInput.disabled = false;
+      addToCartBtn.disabled = false;
+      addToCartBtn.textContent = 'افزودن به سبد خرید';
+    } else {
+      stockDisplay.innerHTML = '<span class="text-danger">ناموجود</span>';
+      quantityInput.disabled = true;
+      addToCartBtn.disabled = true;
+      addToCartBtn.textContent = 'ناموجود';
+    }
+  }
+
+  document.querySelectorAll('.variant-swatch').forEach(function (btn) {
+    btn.addEventListener('click', function () { selectVariant(btn); });
+  });
+
+  var firstSelected = document.querySelector('.variant-swatch.selected');
+  if (firstSelected) {
+    buildGallery(firstSelected.getAttribute('data-image'), firstSelected.getAttribute('data-gallery'));
+  }
+})();
+</script>
+{% endblock %}

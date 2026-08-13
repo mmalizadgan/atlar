@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}درباره ما | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="section-title h2">درباره {{ site_settings.site_name }}</h1>
+      {% if site_settings.about_text %}
+        <p style="white-space: pre-line;">{{ site_settings.about_text }}</p>
+      {% else %}
+        <p class="text-muted">متن «درباره ما» هنوز از پنل مدیریت تنظیم نشده.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{% if current_category %}{{ current_category.name }}{% else %}همه پارچه‌ها{% endif %} | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="section-title h3">{% if current_category %}{{ current_category.name }}{% else %}همه پارچه‌ها{% endif %}</h1>
+
+  <div class="row">
+    <aside class="col-lg-3 mb-4">
+      <div class="mb-4">
+        <h6 class="fw-bold mb-2">دسته‌بندی</h6>
+        <ul class="list-unstyled d-grid gap-1">
+          <li><a href="{% url 'products:fabric_list' %}" class="{% if not current_category %}fw-bold text-dark{% else %}text-muted{% endif %}">همه</a></li>
+          {% for category in categories %}
+            <li>
+              <a href="{{ category.get_absolute_url }}" class="{% if current_category.slug == category.slug %}fw-bold text-dark{% else %}text-muted{% endif %}">
+                {{ category.name }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <form method="get" class="mb-2">
+        {% if current_category %}{% endif %}
+        <label class="form-label small fw-bold">مرتب‌سازی</label>
+        <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>جدیدترین</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>ارزان‌ترین</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>گران‌ترین</option>
+          <option value="name" {% if sort == 'name' %}selected{% endif %}>نام</option>
+        </select>
+        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+      </form>
+    </aside>
+
+    <div class="col-lg-9">
+      {% if query %}
+        <p class="text-muted small mb-3">نتایج جست‌وجو برای «{{ query }}» — {{ page_obj.paginator.count }} پارچه</p>
+      {% endif %}
+
+      <div class="row g-4">
+        {% for fabric in fabrics %}
+          <div class="col-6 col-md-4">
+            {% include "products/_fabric_card.html" %}
+          </div>
+        {% empty %}
+          <p class="text-muted">پارچه‌ای با این مشخصات پیدا نشد.</p>
+        {% endfor %}
+      </div>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-5" aria-label="صفحه‌بندی">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}&sort={{ sort }}">قبلی</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}&sort={{ sort }}">{{ num }}</a>
+              </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}&sort={{ sort }}">بعدی</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

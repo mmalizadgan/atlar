@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}ورود / ثبت‌نام | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-card text-center">
+    <h1 class="h4 mb-2">ورود به {{ site_settings.site_name }}</h1>
+    <p class="text-muted small mb-4">شماره موبایلت رو وارد کن تا کد ورود برات پیامک بشه.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.phone_number.errors %}
+        <div class="alert alert-danger py-2 small">{{ form.phone_number.errors.0 }}</div>
+      {% endif %}
+      {% render_field form.phone_number %}
+      <button type="submit" class="btn btn-gold w-100 mt-3 py-2">دریافت کد ورود</button>
+    </form>
+    <p class="small text-muted mt-4 mb-0">با ورود، شرایط استفاده از {{ site_settings.site_name }} رو می‌پذیری.</p>
+  </div>
+</div>
+{% endblock %}

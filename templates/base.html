@@ -1,0 +1,118 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ site_settings.site_name }} | {{ site_settings.tagline }}{% endblock %}</title>
+<meta name="description" content="{% block meta_description %}{{ site_settings.tagline }}{% endblock %}">
+
+<link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="{% static 'img/icon-192.png' %}">
+<link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+<link rel="preload" href="{% static 'fonts/Vazirmatn[wght].woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{% static 'img/atlar-wordmark.webp' %}" as="image">
+<link rel="stylesheet" href="{% static 'vendor/bootstrap/css/bootstrap.rtl.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg site-navbar sticky-top py-3">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'core:home' %}">
+      <img src="{% static 'img/atlar-wordmark.webp' %}" alt="{{ site_settings.site_name }}" width="154" height="34">
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="باز کردن منو" style="border-color: rgba(255,255,255,.3);">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="{% url 'core:home' %}">خانه</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'products:fabric_list' %}">پارچه‌ها</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'core:about' %}">درباره ما</a></li>
+      </ul>
+      <form class="d-flex me-lg-3 my-2 my-lg-0" role="search" action="{% url 'products:fabric_list' %}" method="get">
+        <input class="form-control form-control-sm" type="search" name="q" placeholder="جست‌وجوی پارچه…" aria-label="جست‌وجو" style="min-width:200px;">
+      </form>
+      <ul class="navbar-nav align-items-lg-center gap-lg-2">
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="{% url 'cart:detail' %}">
+            سبد خرید
+            {% if cart_item_count %}
+              <span class="badge rounded-pill cart-badge align-text-top">{{ cart_item_count }}</span>
+            {% endif %}
+          </a>
+        </li>
+        {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              {{ user.get_short_name }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">حساب کاربری</a></li>
+              <li><a class="dropdown-item" href="{% url 'orders:history' %}">سفارش‌های من</a></li>
+              {% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}">پنل مدیریت</a></li>{% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+                  <button type="submit" class="dropdown-item">خروج</button>
+                </form>
+              </li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item"><a class="btn btn-gold btn-sm px-3" href="{% url 'accounts:login' %}">ورود / ثبت‌نام</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+{% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="بستن"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer mt-5">
+  <div class="container">
+    <div class="row gy-4">
+      <div class="col-md-4">
+        <img src="{% static 'img/atlar-wordmark.webp' %}" alt="{{ site_settings.site_name }}" class="footer-logo mb-2" width="140" height="31">
+        <p class="small mb-0">{{ site_settings.tagline }}</p>
+      </div>
+      <div class="col-md-4">
+        <h6>دسترسی سریع</h6>
+        <ul class="list-unstyled small d-grid gap-2">
+          <li><a href="{% url 'products:fabric_list' %}">همه پارچه‌ها</a></li>
+          <li><a href="{% url 'core:about' %}">درباره ما</a></li>
+          <li><a href="{% url 'orders:history' %}">پیگیری سفارش</a></li>
+        </ul>
+      </div>
+      <div class="col-md-4">
+        <h6>ارتباط با ما</h6>
+        <ul class="list-unstyled small d-grid gap-2">
+          {% if site_settings.phone_display %}<li>{{ site_settings.phone_display }}</li>{% endif %}
+          {% if site_settings.address %}<li>{{ site_settings.address }}</li>{% endif %}
+          {% if site_settings.instagram_username %}<li><a href="https://instagram.com/{{ site_settings.instagram_username }}" rel="noopener" target="_blank">اینستاگرام @{{ site_settings.instagram_username }}</a></li>{% endif %}
+        </ul>
+      </div>
+    </div>
+    <hr>
+    <p class="small text-center mb-0" style="opacity:.7;">© {% now "Y" %} {{ site_settings.site_name }}. تمامی حقوق محفوظ است.</p>
+  </div>
+</footer>
+
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}" defer></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>
