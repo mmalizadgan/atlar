@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block title %}سبد خرید | {{ site_settings.site_name }}{% endblock %}
 {% block content %}
 <div class="container py-4">
@@ -18,7 +19,7 @@
             </a>
             <div class="flex-grow-1">
               <a href="{{ item.variant.fabric.get_absolute_url }}" class="fw-bold text-dark d-block mb-1">{{ item.variant.fabric.name }} — {{ item.variant.color_name }}</a>
-              <div class="text-muted small mb-2">{{ item.variant.fabric.price_per_meter|floatformat:0 }} تومان / متر</div>
+              <div class="text-muted small mb-2">{{ item.variant.fabric.price_per_meter|floatformat:0|intcomma }} تومان / متر</div>
               <form method="post" action="{% url 'cart:update' item.id %}" class="d-flex gap-2 align-items-center">
                 {% csrf_token %}
                 <input type="number" name="quantity_meters" value="{{ item.quantity_meters }}"
@@ -28,7 +29,7 @@
               </form>
             </div>
             <div class="text-end">
-              <div class="fw-bold mb-2">{{ item.line_total|floatformat:0 }} تومان</div>
+              <div class="fw-bold mb-2">{{ item.line_total|floatformat:0|intcomma }} تومان</div>
               <form method="post" action="{% url 'cart:remove' item.id %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-link text-danger p-0">حذف</button>
@@ -43,7 +44,7 @@
           <h2 class="h6 fw-bold mb-3">خلاصه سفارش</h2>
           <div class="d-flex justify-content-between small mb-2">
             <span class="text-muted">جمع کالاها</span>
-            <span>{{ cart.subtotal|floatformat:0 }} تومان</span>
+            <span>{{ cart.subtotal|floatformat:0|intcomma }} تومان</span>
           </div>
           <div class="d-flex justify-content-between small text-muted mb-3">
             <span>هزینه ارسال در مرحله بعد محاسبه می‌شود</span>
@@ -51,7 +52,7 @@
           <hr>
           <div class="d-flex justify-content-between fw-bold mb-3">
             <span>جمع کل</span>
-            <span>{{ cart.subtotal|floatformat:0 }} تومان</span>
+            <span>{{ cart.subtotal|floatformat:0|intcomma }} تومان</span>
           </div>
           <a href="{% url 'orders:checkout' %}" class="btn btn-gold w-100">ادامه و تکمیل سفارش</a>
         </div>

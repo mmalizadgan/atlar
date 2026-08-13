@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block title %}{{ fabric.name }} | {{ site_settings.site_name }}{% endblock %}
 {% block meta_description %}{{ fabric.name }} - {{ fabric.category.name }} - {{ fabric.price_display }}{% endblock %}
 
@@ -26,7 +27,7 @@
     <div class="col-lg-6">
       <div class="text-muted small mb-1">{{ fabric.category.name }}</div>
       <h1 class="h3 mb-2">{{ fabric.name }}</h1>
-      <div class="h4 price-tag mb-3">{{ fabric.price_per_meter|floatformat:0 }}<span class="price-toman"></span></div>
+      <div class="h4 price-tag mb-3">{{ fabric.price_per_meter|floatformat:0|intcomma }}<span class="price-toman"></span></div>
 
       {% if fabric.description %}<p>{{ fabric.description }}</p>{% endif %}
 
