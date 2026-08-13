@@ -6,6 +6,8 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
+from cart.models import Cart
+
 from .forms import OTPVerifyForm, PhoneNumberForm, ProfileForm
 from .models import OTP
 from .services.sms import SMSSendError, send_otp_sms
@@ -14,6 +16,41 @@ User = get_user_model()
 
 SESSION_PHONE_KEY = 'otp_phone_number'
 SESSION_NEXT_KEY = 'otp_next_url'
+SESSION_GUEST_CART_KEY = 'guest_cart_session_key'
+
+
+def _migrate_guest_cart_to_session(request):
+    guest_session_key = request.session.get(SESSION_GUEST_CART_KEY)
+    if not guest_session_key:
+        return
+
+    guest_cart = Cart.objects.filter(session_key=guest_session_key).first()
+    if not guest_cart:
+        request.session.pop(SESSION_GUEST_CART_KEY, None)
+        return
+
+    current_session_key = request.session.session_key
+    if not current_session_key or guest_session_key == current_session_key:
+        request.session.pop(SESSION_GUEST_CART_KEY, None)
+        return
+
+    current_cart = Cart.objects.filter(session_key=current_session_key).first()
+    if current_cart and current_cart.pk != guest_cart.pk:
+        for item in guest_cart.items.all():
+            target, created = current_cart.items.get_or_create(
+                variant=item.variant,
+                defaults={'quantity_meters': item.quantity_meters},
+            )
+            if not created:
+                target.quantity_meters += item.quantity_meters
+                target.save(update_fields=['quantity_meters'])
+            item.delete()
+        guest_cart.delete()
+    else:
+        guest_cart.session_key = current_session_key
+        guest_cart.save(update_fields=['session_key'])
+
+    request.session.pop(SESSION_GUEST_CART_KEY, None)
 
 
 def _recent_otp_cooldown_remaining(phone_number):
@@ -70,7 +107,10 @@ def login_verify_view(request):
             code = form.cleaned_data['code']
             user = authenticate(request, phone_number=phone_number, otp_code=code)
             if user is not None:
+                guest_session_key = request.session.session_key
+                request.session[SESSION_GUEST_CART_KEY] = guest_session_key
                 login(request, user, backend='accounts.backends.OTPBackend')
+                _migrate_guest_cart_to_session(request)
                 del request.session[SESSION_PHONE_KEY]
                 next_url = request.session.pop(SESSION_NEXT_KEY, None)
                 messages.success(request, 'خوش اومدی به آتلار 🌿')
