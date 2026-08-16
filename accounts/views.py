@@ -156,14 +156,20 @@ def profile_view(request):
     if request.method == 'POST':
         form = ProfileForm(request.POST)
         if form.is_valid():
-            request.user.first_name = form.cleaned_data['first_name']
-            request.user.last_name = form.cleaned_data['last_name']
+            full_name = form.cleaned_data['full_name']
+            name_parts = full_name.split(maxsplit=1)
+            request.user.first_name = name_parts[0] if name_parts else ''
+            request.user.last_name = name_parts[1] if len(name_parts) > 1 else ''
             request.user.save(update_fields=['first_name', 'last_name'])
             messages.success(request, 'اطلاعات با موفقیت ذخیره شد.')
             return redirect('accounts:profile')
     else:
-        form = ProfileForm(initial={
-            'first_name': request.user.first_name,
-            'last_name': request.user.last_name,
-        })
-    return render(request, 'accounts/profile.html', {'form': form})
+        form = ProfileForm(initial={'full_name': request.user.get_full_name()})
+
+    orders_count = request.user.orders.count()
+    total_spend = sum((order.total for order in request.user.orders.all()), 0)
+    return render(request, 'accounts/profile.html', {
+        'form': form,
+        'orders_count': orders_count,
+        'total_spend': total_spend,
+    })

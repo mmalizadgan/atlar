@@ -38,7 +38,13 @@ class OTPVerifyForm(forms.Form):
 
 
 class ProfileForm(forms.Form):
-    first_name = forms.CharField(label='نام', max_length=60, required=False,
-                                  widget=forms.TextInput(attrs={'class': 'form-control'}))
-    last_name = forms.CharField(label='نام خانوادگی', max_length=60, required=False,
-                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
+    full_name = forms.CharField(
+        label='نام و نام خانوادگی',
+        max_length=120,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+
+    def clean_full_name(self):
+        value = (self.cleaned_data.get('full_name') or '').strip()
+        return ' '.join(value.split())

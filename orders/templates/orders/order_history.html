@@ -1,14 +1,47 @@
 {% extends "base.html" %}
+{% load price_filters %}
 {% block title %}سفارش‌های من | {{ site_settings.site_name }}{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <h1 class="section-title h3">سفارش‌های من</h1>
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="section-title h3 mb-1">سفارش‌های من</h1>
+      <p class="text-muted mb-0">وضعیت سفارش‌ها و جزئیات خرید شما</p>
+    </div>
+    <a href="{% url 'products:fabric_list' %}" class="btn btn-navy">شروع خرید جدید</a>
+  </div>
+
   {% if orders %}
-    <div class="table-responsive">
-      <table class="table align-middle">
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="fabric-card p-3 h-100">
+          <div class="text-muted small">تعداد سفارش‌ها</div>
+          <div class="fw-bold fs-4">{{ orders|length }}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="fabric-card p-3 h-100">
+          <div class="text-muted small">آخرین سفارش</div>
+          <div class="fw-bold fs-5">{{ orders.0.created_at|date:"Y/m/d" }}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="fabric-card p-3 h-100">
+          <div class="text-muted small">جمع کل</div>
+          <div class="fw-bold fs-5">{{ orders.0.total|default:0|floatformat:0 }} تومان</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive fabric-card">
+      <table class="table align-middle mb-0">
         <thead>
           <tr class="text-muted small">
-            <th>شماره سفارش</th><th>تاریخ</th><th>وضعیت</th><th>مبلغ</th><th></th>
+            <th>شماره سفارش</th>
+            <th>تاریخ</th>
+            <th>وضعیت</th>
+            <th>مبلغ</th>
+            <th class="text-center">جزئیات</th>
           </tr>
         </thead>
         <tbody>
@@ -18,15 +51,18 @@
               <td>{{ order.created_at|date:"Y/m/d H:i" }}</td>
               <td><span class="badge bg-light text-dark border">{{ order.get_status_display }}</span></td>
               <td>{{ order.total|floatformat:0 }} تومان</td>
-              <td><a href="{% url 'orders:detail' order.order_number %}" class="btn btn-sm btn-outline-navy">جزئیات</a></td>
+              <td class="text-center"><a href="{% url 'orders:detail' order.order_number %}" class="btn btn-sm btn-outline-navy">جزئیات</a></td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   {% else %}
-    <p class="text-muted">هنوز سفارشی ثبت نکردی.</p>
-    <a href="{% url 'products:fabric_list' %}" class="btn btn-navy">مشاهده پارچه‌ها</a>
+    <div class="fabric-card p-5 text-center">
+      <h2 class="h5 mb-3">هنوز سفارشی ثبت نکرده‌اید</h2>
+      <p class="text-muted mb-4">برای شروع خرید، اولین پارچه مورد علاقه‌تان را انتخاب کنید.</p>
+      <a href="{% url 'products:fabric_list' %}" class="btn btn-navy">مشاهده پارچه‌ها</a>
+    </div>
   {% endif %}
 </div>
 {% endblock %}

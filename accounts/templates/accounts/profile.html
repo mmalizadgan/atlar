@@ -3,26 +3,55 @@
 {% block title %}حساب کاربری | {{ site_settings.site_name }}{% endblock %}
 {% block content %}
 <div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-6">
-      <h1 class="section-title h4">حساب کاربری</h1>
-      <div class="mb-4">
-        <span class="text-muted small">شماره موبایل</span>
-        <div class="fw-bold" dir="ltr">{{ user.phone_number }}</div>
+  <div class="row g-4 justify-content-center">
+    <div class="col-lg-4">
+      <div class="fabric-card p-4 h-100">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-circle bg-navy text-white d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:1.2rem;font-weight:700;">
+            {{ user.get_short_name|first|default:'م' }}
+          </div>
+          <div>
+            <div class="text-muted small">سلام</div>
+            <div class="fw-bold">{{ user.get_full_name|default:'مشتری گرامی' }}</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="text-muted small">شماره موبایل</div>
+          <div class="fw-bold" dir="ltr">{{ user.phone_number }}</div>
+        </div>
+
+        <a href="{% url 'orders:history' %}" class="btn btn-gold w-100">مشاهده سفارش‌های من</a>
       </div>
-      <form method="post" novalidate>
-        {% csrf_token %}
-        <div class="mb-3">
-          <label class="form-label">{{ form.first_name.label }}</label>
-          {% render_field form.first_name %}
+    </div>
+
+    <div class="col-lg-8">
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="fabric-card p-3">
+            <div class="text-muted small">تعداد سفارش‌ها</div>
+            <div class="display-6 fs-3 fw-bold">{{ orders_count }}</div>
+          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">{{ form.last_name.label }}</label>
-          {% render_field form.last_name %}
+        <div class="col-md-6">
+          <div class="fabric-card p-3">
+            <div class="text-muted small">مجموع خرید</div>
+            <div class="display-6 fs-3 fw-bold">{{ total_spend|floatformat:0 }} تومان</div>
+          </div>
         </div>
-        <button type="submit" class="btn btn-navy">ذخیره تغییرات</button>
-        <a href="{% url 'orders:history' %}" class="btn btn-outline-navy">سفارش‌های من</a>
-      </form>
+      </div>
+
+      <div class="fabric-card p-4">
+        <h1 class="section-title h4 mb-3">اطلاعات شخصی</h1>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">{{ form.full_name.label }}</label>
+            {% render_field form.full_name %}
+          </div>
+          <button type="submit" class="btn btn-navy">ذخیره تغییرات</button>
+        </form>
+      </div>
     </div>
   </div>
 </div>
