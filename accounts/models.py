@@ -114,3 +114,27 @@ class OTP(models.Model):
     def is_valid(self):
         max_attempts = getattr(settings, 'OTP_MAX_ATTEMPTS', 5)
         return not self.is_used and not self.is_expired and self.attempts < max_attempts
+
+
+class Address(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='addresses',
+        verbose_name='کاربر',
+    )
+    title = models.CharField('عنوان آدرس', max_length=80, blank=True, default='آدرس اصلی')
+    address_line = models.CharField('آدرس', max_length=300)
+    city = models.CharField('شهر', max_length=80)
+    postal_code = models.CharField('کد پستی', max_length=10)
+    phone_number = models.CharField('شماره تماس', max_length=11, validators=[phone_validator])
+    is_default = models.BooleanField('پیش‌فرض', default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'آدرس'
+        verbose_name_plural = 'آدرس‌ها'
+        ordering = ['-is_default', '-created_at']
+
+    def __str__(self):
+        return f'{self.user.get_full_name() or self.user.phone_number} - {self.city}'
