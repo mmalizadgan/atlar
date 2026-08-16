@@ -94,6 +94,40 @@
 </section>
 {% endif %}
 
+<section class="container py-4 py-md-5">
+  <div class="shipping-offer-card">
+    {% with threshold=site_settings.free_shipping_threshold|default:500000 %}
+      {% with current_cart_total=cart_subtotal|default:0 %}
+        {% if threshold %}
+          {% widthratio current_cart_total threshold 100 as shipping_progress %}
+          {% with remaining_amount=threshold|add:"-"|add:current_cart_total %}
+            <div class="shipping-offer-header">
+              <div>
+                <span class="shipping-offer-badge">ارسال رایگان</span>
+                <h3>سفارش بالای ۵۰ متر، ارسال رایگان</h3>
+              </div>
+              <div class="shipping-offer-value">{{ current_cart_total|floatformat:0 }} / {{ threshold|floatformat:0 }} تومان</div>
+            </div>
+
+            <div class="shipping-progress-wrap" aria-label="پیشرفت تا ارسال رایگان">
+              <div class="shipping-progress-bar" style="width: {% if shipping_progress > 100 %}100{% else %}{{ shipping_progress }}{% endif %}%;"></div>
+            </div>
+
+            <div class="shipping-offer-meta">
+              {% if current_cart_total >= threshold %}
+                <span class="text-success fw-bold">شما به حد ارسال رایگان رسیده‌اید.</span>
+              {% else %}
+                <span>تا دریافت ارسال رایگان، فقط {{ remaining_amount|floatformat:0 }} تومان دیگر سفارش بده.</span>
+              {% endif %}
+              <a href="{% url 'products:fabric_list' %}" class="btn btn-gold btn-sm">ادامه خرید</a>
+            </div>
+          {% endwith %}
+        {% endif %}
+      {% endwith %}
+    {% endwith %}
+  </div>
+</section>
+
 <section class="container py-5">
   <div class="section-heading text-center mb-4">
     <span class="eyebrow">چرا آتلار؟</span>
