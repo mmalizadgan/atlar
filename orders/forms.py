@@ -16,10 +16,14 @@ class CheckoutForm(forms.Form):
         label='شهر', max_length=80,
         widget=forms.TextInput(attrs={'class': 'form-control'}),
     )
+    email = forms.EmailField(
+        label='ایمیل (اختیاری)', required=False,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
+    )
     address_line = forms.CharField(
         label='آدرس کامل', widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
     )
     postal_code = forms.CharField(
-        label='کد پستی', max_length=10, required=False,
+        label='کد پستی', max_length=10,
         widget=forms.TextInput(attrs={'class': 'form-control', 'dir': 'ltr'}),
     )

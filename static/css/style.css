@@ -42,12 +42,23 @@ html {
   scroll-behavior: smooth;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
   font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
   background-color: var(--cream-100);
   color: var(--ink-900);
   line-height: 1.85;
   font-size: 1rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
 }
 
 h1, h2, h3, h4, h5, .display-headline {
@@ -152,12 +163,166 @@ a:hover { color: var(--gold-600); }
 .hero h1 { color: var(--cream-100); font-size: clamp(1.9rem, 4vw, 3.1rem); }
 .hero .lead { color: var(--cream-200); opacity: .9; font-size: 1.15rem; }
 
+.hero-badges { margin-top: .25rem; }
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.06);
+  padding: .4rem .8rem;
+  font-size: .72rem;
+  color: var(--cream-200);
+  backdrop-filter: blur(4px);
+}
+
+.hero-cta-row { margin-top: 1rem; }
+.hero-stats { max-width: 500px; }
+.stat-box {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 14px;
+  padding: .95rem .75rem;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(5, 20, 31, .12);
+}
+.stat-box strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--gold-400);
+  margin-bottom: .15rem;
+}
+.stat-box span {
+  font-size: .7rem;
+  color: var(--cream-200);
+}
+
+.hero-showcase {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 24px;
+  padding: 1.2rem;
+  box-shadow: 0 22px 48px rgba(2, 16, 23, .35);
+}
+.showcase-top {
+  margin-bottom: 1rem;
+  color: var(--cream-200);
+}
+.showcase-label { font-size: .8rem; opacity: .85; }
+.showcase-pill {
+  font-size: .72rem;
+  background: rgba(214, 176, 94, .18);
+  color: var(--gold-300);
+  border: 1px solid rgba(214, 176, 94, .3);
+  border-radius: 999px;
+  padding: .3rem .6rem;
+}
+.showcase-product {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.showcase-image-wrap {
+  background: linear-gradient(135deg, rgba(198,154,78,.18), rgba(255,255,255,.02));
+  padding: 1.25rem;
+  text-align: center;
+}
+.showcase-image-wrap img { max-height: 220px; object-fit: contain; }
+.showcase-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1rem .8rem;
+}
+.showcase-meta h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--cream-100);
+}
+.showcase-price {
+  font-size: .8rem;
+  color: var(--gold-400);
+  white-space: nowrap;
+}
+.showcase-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: 1rem;
+}
+.showcase-features > div {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  background: rgba(255,255,255,.04);
+  border-radius: 12px;
+  padding: .65rem .5rem;
+  color: var(--cream-200);
+  font-size: .75rem;
+}
+.showcase-features > div span {
+  color: var(--gold-400);
+  font-weight: 700;
+}
+
 .hero-wave {
   display: block;
   width: 100%;
   height: 48px;
   fill: var(--cream-100);
   margin-bottom: -1px;
+}
+
+.section-heading {
+  margin-bottom: 2rem;
+}
+.eyebrow {
+  display: inline-block;
+  margin-bottom: .75rem;
+  color: var(--navy-800);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: .75rem;
+}
+
+.feature-grid { margin-top: 1rem; }
+.feature-card {
+  height: 100%;
+  background: #fff;
+  border: 1px solid rgba(15,30,51,.08);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  padding: 1.5rem 1.2rem;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(166,123,52,.12);
+  border: 1px solid rgba(166,123,52,.22);
+  border-radius: 14px;
+  color: var(--navy-900);
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+.feature-card h3 {
+  font-size: 1.08rem;
+  margin-bottom: .7rem;
+}
+.feature-card p {
+  margin: 0;
+  color: var(--muted-600);
+  font-size: .93rem;
 }
 
 /* ---------- کارت دسته‌بندی / پارچه ---------- */
@@ -301,12 +466,17 @@ a:hover { color: var(--gold-600); }
 .site-footer {
   background: var(--navy-950);
   color: var(--cream-200);
-  padding-block: 3rem 1.5rem;
+  padding-block: 0;
+  margin-top: auto;
 }
 .site-footer h6 { color: var(--gold-400); font-weight: 700; margin-bottom: 1rem; }
 .site-footer a { color: var(--cream-200); }
 .site-footer a:hover { color: var(--gold-400); }
 .site-footer hr { border-color: rgba(255,255,255,.12); }
+.site-footer-bottom {
+  border-top: 1px solid rgba(255,255,255,.12);
+  background: rgba(2, 15, 24, .28);
+}
 
 /* ---------- عمومی ---------- */
 .section-title {

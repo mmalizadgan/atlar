@@ -26,7 +26,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('سفارش', {'fields': ('order_number', 'user', 'status')}),
-        ('گیرنده', {'fields': ('full_name', 'phone_number', 'city', 'address_line', 'postal_code')}),
+        ('گیرنده', {'fields': ('full_name', 'phone_number', 'email', 'city', 'address_line', 'postal_code')}),
         ('مبالغ', {'fields': ('subtotal', 'shipping_cost', 'total')}),
         ('تاریخ‌ها', {'fields': ('created_at', 'updated_at')}),
     )

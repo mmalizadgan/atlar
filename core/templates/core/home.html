@@ -4,15 +4,78 @@
 {% block content %}
 <section class="hero">
   <div class="container hero-content">
-    <div class="row align-items-center">
+    <div class="row align-items-center g-5">
       <div class="col-lg-7">
+        <div class="hero-badges d-flex flex-wrap gap-2 mb-3">
+          <span class="hero-badge">فروش مستقیم</span>
+          <span class="hero-badge">ارسال سریع</span>
+          <span class="hero-badge">تضمین کیفیت</span>
+        </div>
         <h1 class="fw-bold mb-3">{{ site_settings.tagline }}</h1>
-        <p class="lead mb-4">پارچه‌های مبلی باکیفیت با تنوع رنگ و طرح، مناسب برای مبلمان خانگی و پروژه‌های دکوراسیون. سفارش آسان، ارسال به سراسر کشور.</p>
-        <a href="{% url 'products:fabric_list' %}" class="btn btn-gold btn-lg px-4">مشاهده پارچه‌ها</a>
-        <a href="{% url 'core:about' %}" class="btn btn-outline-navy btn-lg px-4 ms-2" style="border-color: rgba(255,255,255,.4); color:#fff;">درباره آتلار</a>
+        <p class="lead mb-4">پارچه‌های مبلی باکیفیت با تنوع رنگ، بافت و طرح، مناسب برای خانه، دکوراسیون و پروژه‌های حرفه‌ای. سفارش آسان، مشاوره دقیق و تحویل مطمئن به سراسر ایران.</p>
+
+        <div class="hero-cta-row d-flex flex-wrap gap-3 mb-4">
+          <a href="{% url 'products:fabric_list' %}" class="btn btn-gold btn-lg px-4">مشاهده پارچه‌ها</a>
+          <a href="{% url 'core:about' %}" class="btn btn-outline-navy btn-lg px-4" style="border-color: rgba(255,255,255,.4); color:#fff;">درباره آتلار</a>
+        </div>
+
+        <div class="hero-stats row g-3">
+          <div class="col-4">
+            <div class="stat-box">
+              <strong>+۵۰۰</strong>
+              <span>سفارش موفق</span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-box">
+              <strong>۴۸ ساعت</strong>
+              <span>ارسال سریع</span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-box">
+              <strong>۴.۹/۵</strong>
+              <span>رضایت مشتری</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-lg-5 d-none d-lg-block text-center">
-        <img src="{% static 'img/atlar-logo-full.webp' %}" alt="{{ site_settings.site_name }}" class="img-fluid" style="max-height:320px;" width="450" height="290">
+
+      <div class="col-lg-5 d-none d-lg-block">
+        <div class="hero-showcase">
+          <div class="showcase-top d-flex align-items-center justify-content-between">
+            <span class="showcase-label">پرفروش‌های این هفته</span>
+            <span class="showcase-pill">ویژه</span>
+          </div>
+
+          <div class="showcase-product">
+            <div class="showcase-image-wrap">
+              <img src="{% static 'img/atlar-logo-full.webp' %}" alt="{{ site_settings.site_name }}" class="img-fluid" width="420" height="300">
+            </div>
+            <div class="showcase-meta">
+              <div>
+                <small class="text-muted">کالکشن</small>
+                <h3>پارچه‌های مدرن مبلی</h3>
+              </div>
+              <span class="showcase-price">از ۴۵۰,۰۰۰ تومان</span>
+            </div>
+          </div>
+
+          <div class="showcase-features">
+            <div>
+              <span>✔</span>
+              <small>رنگ‌بندی متنوع</small>
+            </div>
+            <div>
+              <span>✔</span>
+              <small>کیفیت تضمینی</small>
+            </div>
+            <div>
+              <span>✔</span>
+              <small>مشاوره رایگان</small>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -31,8 +94,51 @@
 </section>
 {% endif %}
 
+<section class="container py-5">
+  <div class="section-heading text-center mb-4">
+    <span class="eyebrow">چرا آتلار؟</span>
+    <h2 class="section-title h3 mb-2">انتخابی مطمئن برای خرید پارچه</h2>
+    <p class="text-muted mx-auto" style="max-width: 700px;">از انتخاب رنگ تا ارسال و پشتیبانی، تجربه خرید ما طوری طراحی شده که مشتری بدون استرس و با اطمینان سفارش خود را تکمیل کند.</p>
+  </div>
+
+  <div class="feature-grid row g-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="feature-card">
+        <div class="feature-icon">01</div>
+        <h3>کیفیت تضمینی</h3>
+        <p>پارچه‌های ما از بهترین متریال‌های بازار انتخاب شده‌اند تا دوام و ظاهر دلخواه شما را فراهم کنند.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="feature-card">
+        <div class="feature-icon">02</div>
+        <h3>تنوع رنگ و طرح</h3>
+        <p>از رنگ‌های مینیمال تا طراحی‌های پرطرفدار، انتخاب شما محدود نیست و فضای منزل‌تان را کامل می‌کند.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="feature-card">
+        <div class="feature-icon">03</div>
+        <h3>مشاوره تخصصی</h3>
+        <p>برای انتخاب بهتر و هماهنگ‌کردن پارچه با سبک دکور، تیم ما در کنار شماست تا انتخابی دقیق داشته باشید.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="feature-card">
+        <div class="feature-icon">04</div>
+        <h3>تحویل مطمئن</h3>
+        <p>سفارش‌ها با دقت بسته‌بندی می‌شوند و در زمان مناسب به مقصد می‌رسند تا خرید شما آسان و مطمئن بماند.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="container py-4 pb-5">
-  <h2 class="section-title h3">پارچه‌های ویژه</h2>
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+    <h2 class="section-title h3 mb-0">پارچه‌های ویژه</h2>
+    <a href="{% url 'products:fabric_list' %}" class="text-decoration-none fw-bold">مشاهده همه</a>
+  </div>
+
   <div class="row g-4">
     {% for fabric in featured_fabrics %}
       <div class="col-6 col-md-4 col-lg-3">

@@ -60,7 +60,6 @@
           {% if fabric.material %}<tr><th class="text-muted fw-normal">جنس</th><td>{{ fabric.material }}</td></tr>{% endif %}
           <tr><th class="text-muted fw-normal">عرض رول</th><td>{{ fabric_width_cm }} سانتی‌متر</td></tr>
           {% if fabric.abrasion_rating %}<tr><th class="text-muted fw-normal">مقاومت سایش (مارتیندل)</th><td>{{ fabric.abrasion_rating }}</td></tr>{% endif %}
-          <tr><th class="text-muted fw-normal">ضد حریق</th><td>{% if fabric.is_fire_retardant %}بله{% else %}خیر{% endif %}</td></tr>
           <tr><th class="text-muted fw-normal">قابل شست‌وشو</th><td>{% if fabric.is_washable %}بله{% else %}خیر{% endif %}</td></tr>
           <tr><th class="text-muted fw-normal">موجودی</th><td id="stockDisplay">{% if fabric.default_variant.in_stock %}{{ fabric.default_variant.stock_meters }} متر{% else %}<span class="text-danger">ناموجود</span>{% endif %}</td></tr>
         </tbody>

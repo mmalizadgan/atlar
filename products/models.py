@@ -70,7 +70,6 @@ class Fabric(models.Model):
         'مقاومت سایش (مارتیندل)', null=True, blank=True,
         help_text='تعداد چرخه تست مارتیندل — هرچه بیشتر، بادوام‌تر.',
     )
-    is_fire_retardant = models.BooleanField('ضد حریق', default=False)
     is_washable = models.BooleanField('قابل شست‌وشو', default=False)
 
     price_per_meter = models.DecimalField('قیمت هر متر (تومان)', max_digits=12, decimal_places=0)

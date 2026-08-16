@@ -42,6 +42,7 @@ def checkout_view(request):
                     user=request.user,
                     full_name=form.cleaned_data['full_name'],
                     phone_number=form.cleaned_data['phone_number'],
+                    email=form.cleaned_data.get('email', ''),
                     address_line=form.cleaned_data['address_line'],
                     city=form.cleaned_data['city'],
                     postal_code=form.cleaned_data['postal_code'],

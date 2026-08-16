@@ -24,9 +24,10 @@ class Order(models.Model):
     # اسنپ‌شات اطلاعات گیرنده در لحظه ثبت سفارش
     full_name = models.CharField('نام گیرنده', max_length=120)
     phone_number = models.CharField(max_length=11, validators=[phone_validator])
+    email = models.EmailField('ایمیل', max_length=255, blank=True, default='')
     address_line = models.CharField('آدرس', max_length=300)
     city = models.CharField('شهر', max_length=80)
-    postal_code = models.CharField('کد پستی', max_length=10, blank=True)
+    postal_code = models.CharField('کد پستی', max_length=10)
 
     subtotal = models.DecimalField(max_digits=12, decimal_places=0, default=0)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=0, default=0)

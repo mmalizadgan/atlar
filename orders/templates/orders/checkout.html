@@ -23,12 +23,17 @@
           {% render_field form.city %}
         </div>
         <div class="mb-3">
+          <label class="form-label">{{ form.email.label }}</label>
+          {% render_field form.email %}
+        </div>
+        <div class="mb-3">
           <label class="form-label">{{ form.address_line.label }}</label>
           {% render_field form.address_line %}
         </div>
         <div class="mb-4">
-          <label class="form-label">{{ form.postal_code.label }} <span class="text-muted small">(اختیاری)</span></label>
+          <label class="form-label">{{ form.postal_code.label }}</label>
           {% render_field form.postal_code %}
+          {% if form.postal_code.errors %}<div class="text-danger small mt-1">{{ form.postal_code.errors.0 }}</div>{% endif %}
         </div>
         <button type="submit" class="btn btn-gold w-100 py-2">پرداخت با بله‌پی</button>
       </form>

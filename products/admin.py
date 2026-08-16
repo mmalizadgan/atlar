@@ -67,7 +67,7 @@ class FabricAdmin(admin.ModelAdmin):
     ]
     list_display_links = ['thumbnail', 'name']
     list_editable = ['price_per_meter', 'is_active', 'is_featured']
-    list_filter = ['category', 'is_active', 'is_featured', 'is_fire_retardant', 'is_washable']
+    list_filter = ['category', 'is_active', 'is_featured', 'is_washable']
     search_fields = ['name', 'sku', 'description']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at', 'sku']
@@ -81,7 +81,7 @@ class FabricAdmin(admin.ModelAdmin):
             'fields': ('name', 'slug', 'category', 'sku', 'description'),
         }),
         ('مشخصات پارچه', {
-            'fields': ('pattern', 'material', 'abrasion_rating', 'is_fire_retardant', 'is_washable'),
+            'fields': ('pattern', 'material', 'abrasion_rating', 'is_washable'),
             'description': 'عرض رول از «تنظیمات سایت» (Core → Site settings) کنترل می‌شه، چون برای همه‌ی پارچه‌ها ثابته.',
         }),
         ('قیمت', {
