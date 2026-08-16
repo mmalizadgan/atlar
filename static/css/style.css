@@ -133,6 +133,18 @@ a:hover { color: var(--gold-600); }
 .site-navbar .nav-link:hover,
 .site-navbar .nav-link.active { color: var(--gold-400) !important; }
 
+.navbar-toggler {
+  border: 1.5px solid var(--gold-500) !important;
+  padding: .45rem .55rem;
+  background: transparent;
+}
+.navbar-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(198, 154, 78, 0.25);
+}
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28200, 175, 98, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
 .cart-badge {
   background: var(--gold-500);
   color: var(--navy-950);
