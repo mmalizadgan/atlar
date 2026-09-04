@@ -2,28 +2,6 @@
 {% block title %}{% if current_category %}{{ current_category.name }}{% else %}همه پارچه‌ها{% endif %} | {{ site_settings.site_name }}{% endblock %}
 {% block content %}
 <div class="container py-4">
-  <div class="shipping-offer-card compact-card mb-4">
-    <div class="shipping-offer-header small-header">
-      <div>
-        <span class="shipping-offer-badge">ارسال رایگان</span>
-        <h3>سفارش بالای ۵۰ متر، ارسال رایگان</h3>
-      </div>
-      <div class="shipping-offer-value">{{ cart_total_meters|default:0|floatformat:0 }} / ۵۰ متر</div>
-    </div>
-
-    <div class="shipping-progress-wrap" aria-label="پیشرفت تا ارسال رایگان">
-      <div class="shipping-progress-bar" style="width: {{ free_shipping_progress_percent|default:0|floatformat:0 }}%;"></div>
-    </div>
-
-    <div class="shipping-offer-meta compact-meta">
-      {% if cart_total_meters >= 50 %}
-        <span class="text-success fw-bold">شما به حد ارسال رایگان رسیده‌اید.</span>
-      {% else %}
-        <span>فقط {{ free_shipping_remaining_meters|default:50|floatformat:0 }} متر دیگر تا ارسال رایگان مانده.</span>
-      {% endif %}
-    </div>
-  </div>
-
   <h1 class="section-title h3">{% if current_category %}{{ current_category.name }}{% else %}همه پارچه‌ها{% endif %}</h1>
 
   <div class="row">
