@@ -1,12 +1,12 @@
-import random
 from datetime import timedelta
-
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
+import secrets
+
 
 phone_validator = RegexValidator(
     regex=r'^09\d{9}$',
@@ -79,11 +79,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.first_name or self.phone_number
 
 
+
 def generate_otp_code():
-    length = getattr(settings, 'OTP_CODE_LENGTH', 5)
-    return ''.join(random.choices('0123456789', k=length))
-
-
+    length = getattr(settings, 'OTP_CODE_LENGTH', 6)
+    return ''.join(secrets.choice('0123456789') for _ in range(length))
 def default_expiry():
     seconds = getattr(settings, 'OTP_EXPIRY_SECONDS', 120)
     return timezone.now() + timedelta(seconds=seconds)
