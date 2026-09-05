@@ -2,6 +2,13 @@ from django import forms
 
 from .models import phone_validator
 
+# نگاشت ارقام فارسی/عربی به لاتین — بدون این، کاربری که ۰۹۱۲... تایپ کند رد می‌شد.
+PERSIAN_DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
+
+
+def normalize_digits(value: str) -> str:
+    return (value or '').translate(PERSIAN_DIGITS)
+
 
 class PhoneNumberForm(forms.Form):
     phone_number = forms.CharField(
@@ -11,6 +18,8 @@ class PhoneNumberForm(forms.Form):
         widget=forms.TextInput(attrs={
             'placeholder': '09xxxxxxxxx',
             'inputmode': 'numeric',
+            'autocomplete': 'tel',
+            'maxlength': 11,
             'autofocus': True,
             'dir': 'ltr',
             'class': 'form-control form-control-lg text-center',
@@ -18,8 +27,12 @@ class PhoneNumberForm(forms.Form):
     )
 
     def clean_phone_number(self):
-        value = self.cleaned_data['phone_number'].strip()
-        value = value.replace(' ', '')
+        # ⚠️ اصلاح: نرمال‌سازی ارقام فارسی/عربی + حذف همه‌ی جداکننده‌ها و کاراکترهای کنترلی
+        value = normalize_digits(self.cleaned_data['phone_number'])
+        value = ''.join(value.split())
+        # فقط رقم؛ اگر کاراکتر غیررقمی تزریق شده باشد، همین‌جا رد می‌شود.
+        if not value.isdigit():
+            raise forms.ValidationError('شماره موبایل فقط باید رقم باشد.')
         return value
 
 
@@ -27,14 +40,25 @@ class OTPVerifyForm(forms.Form):
     code = forms.CharField(
         label='کد تایید',
         max_length=8,
+        min_length=4,
         widget=forms.TextInput(attrs={
-            'placeholder': '۱۲۳۴۵',
+            'placeholder': '۱۲۳۴۵۶',
             'inputmode': 'numeric',
+            'autocomplete': 'one-time-code',
+            'maxlength': 8,
             'autofocus': True,
             'dir': 'ltr',
             'class': 'form-control form-control-lg text-center otp-input',
         }),
     )
+
+    def clean_code(self):
+        # ⚠️ اصلاح: ارقام فارسی پذیرفته می‌شود ولی فقط رقم مجاز است
+        # (جلوگیری از ارسال کدهای جعلی/کاراکترهای یونیکد به لایه‌ی مقایسه)
+        value = normalize_digits(self.cleaned_data['code']).strip()
+        if not value.isdigit():
+            raise forms.ValidationError('کد تایید فقط باید رقم باشد.')
+        return value
 
 
 class ProfileForm(forms.Form):
@@ -42,9 +66,11 @@ class ProfileForm(forms.Form):
         label='نام و نام خانوادگی',
         max_length=120,
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        widget=forms.TextInput(attrs={'class': 'form-control', 'maxlength': 120}),
     )
 
     def clean_full_name(self):
-        value = (self.cleaned_data.get('full_name') or '').strip()
+        value = normalize_digits(self.cleaned_data.get('full_name') or '').strip()
+        # حذف کاراکترهای کنترلی که می‌توانند در لاگ‌ها/رندر مشکل بسازند
+        value = ''.join(ch for ch in value if ch.isprintable())
         return ' '.join(value.split())

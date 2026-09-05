@@ -1,22 +1,34 @@
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
 from cart.models import Cart
 
 from .forms import OTPVerifyForm, PhoneNumberForm, ProfileForm
-from .models import OTP
+from .services import otp as otp_service
 from .services.sms import SMSSendError, send_otp_sms
-
-User = get_user_model()
 
 SESSION_PHONE_KEY = 'otp_phone_number'
 SESSION_NEXT_KEY = 'otp_next_url'
 SESSION_GUEST_CART_KEY = 'guest_cart_session_key'
+
+
+def _safe_next_url(request):
+    """
+    ⚠️ اصلاح: `next` فقط اگر آدرس داخلی باشد پذیرفته می‌شود (جلوگیری از Open Redirect).
+    """
+    candidate = request.POST.get('next') or request.GET.get('next')
+    if not candidate:
+        return None
+    if url_has_allowed_host_and_scheme(
+        candidate, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return candidate
+    return None
 
 
 def _migrate_guest_cart_to_session(request):
@@ -53,20 +65,51 @@ def _migrate_guest_cart_to_session(request):
     request.session.pop(SESSION_GUEST_CART_KEY, None)
 
 
-def _recent_otp_cooldown_remaining(phone_number):
-    """اگر یک کد هنوز در بازه‌ی خنک‌سازی باشه، ثانیه‌های باقی‌مانده رو برمی‌گردونه، وگرنه None."""
-    last_otp = OTP.objects.filter(phone_number=phone_number).order_by('-created_at').first()
-    if not last_otp:
-        return None
-    elapsed = (timezone.now() - last_otp.created_at).total_seconds()
-    remaining = settings.OTP_RESEND_COOLDOWN_SECONDS - elapsed
-    return int(remaining) if remaining > 0 else None
+def _masked_phone(phone_number):
+    """شماره در UI نیمه‌پوشان نشان داده می‌شود (کاهش نشت اطلاعات در اسکرین‌شات‌ها)."""
+    if len(phone_number) < 7:
+        return phone_number
+    return f'{phone_number[:4]}•••{phone_number[-3:]}'
 
 
-def _issue_otp(phone_number):
-    otp = OTP.objects.create(phone_number=phone_number)
-    send_otp_sms(phone_number, otp.code)
-    return otp
+def _issue_and_send(request, phone_number):
+    """
+    صادر کردن کد + ارسال پیامک، با مدیریت کامل خطاها.
+    همیشه None برمی‌گرداند؛ پیام‌ها از طریق messages ثبت می‌شوند.
+    """
+    # نشست باید از قبل وجود داشته باشد تا کد به آن گره بخورد (session binding).
+    if not request.session.session_key:
+        request.session.create()
+
+    try:
+        otp = otp_service.issue_otp(
+            phone_number=phone_number,
+            session_key=request.session.session_key or '',
+            ip_address=otp_service.get_client_ip(request),
+        )
+    except otp_service.OTPCooldownError as exc:
+        messages.warning(request, f'کد قبلی هنوز معتبره. {exc.remaining_seconds} ثانیه دیگه دوباره تلاش کن.')
+        return
+    except otp_service.OTPLockedOutError as exc:
+        minutes = max(1, exc.remaining_seconds // 60)
+        messages.error(request, f'به دلیل تلاش‌های ناموفق، این شماره {minutes} دقیقه قفل شده. بعداً تلاش کن.')
+        return
+    except otp_service.OTPThrottledError as exc:
+        messages.error(request, str(exc) or 'تعداد درخواست کد زیاد است. کمی بعد دوباره تلاش کن.')
+        return
+
+    # ارسال کد خام (فقط همین‌جا وجود دارد و در دیتابیس ذخیره نمی‌شود)
+    try:
+        send_otp_sms(phone_number, otp.plain_code)
+    except SMSSendError:
+        # کد را می‌سوزانیم تا مهاجم نتواند از خطای ارسال سوءاستفاده کند.
+        otp.is_used = True
+        otp.save(update_fields=['is_used'])
+        messages.error(request, 'ارسال پیامک با مشکل مواجه شد. کمی بعد دوباره تلاش کن.')
+        return
+
+    request.session[SESSION_PHONE_KEY] = phone_number
+    messages.info(request, 'کد تایید پیامک شد.')
 
 
 @require_http_methods(['GET', 'POST'])
@@ -78,16 +121,10 @@ def login_request_view(request):
         form = PhoneNumberForm(request.POST)
         if form.is_valid():
             phone_number = form.cleaned_data['phone_number']
-            remaining = _recent_otp_cooldown_remaining(phone_number)
-            if remaining:
-                messages.warning(request, f'کد قبلی هنوز معتبره. {remaining} ثانیه دیگه دوباره تلاش کن.')
-            else:
-                try:
-                    _issue_otp(phone_number)
-                except SMSSendError:
-                    messages.error(request, 'ارسال پیامک با مشکل مواجه شد. کمی بعد دوباره تلاش کن.')
-                    return render(request, 'accounts/login_request.html', {'form': form})
-                request.session[SESSION_PHONE_KEY] = phone_number
+            next_url = _safe_next_url(request)
+            if next_url:
+                request.session[SESSION_NEXT_KEY] = next_url
+            _issue_and_send(request, phone_number)
             return redirect('accounts:verify')
     else:
         form = PhoneNumberForm()
@@ -105,25 +142,41 @@ def login_verify_view(request):
         form = OTPVerifyForm(request.POST)
         if form.is_valid():
             code = form.cleaned_data['code']
-            user = authenticate(request, phone_number=phone_number, otp_code=code)
-            if user is not None:
-                guest_session_key = request.session.session_key
-                request.session[SESSION_GUEST_CART_KEY] = guest_session_key
-                login(request, user, backend='accounts.backends.OTPBackend')
-                _migrate_guest_cart_to_session(request)
-                del request.session[SESSION_PHONE_KEY]
-                next_url = request.session.pop(SESSION_NEXT_KEY, None)
-                messages.success(request, 'خوش اومدی به آتلار 🌿')
-                return redirect(next_url or settings.LOGIN_REDIRECT_URL)
-            messages.error(request, 'کد وارد شده اشتباه یا منقضی‌شده است.')
+            try:
+                user = authenticate(request, phone_number=phone_number, otp_code=code)
+            except otp_service.OTPLockedOutError as exc:
+                minutes = max(1, exc.remaining_seconds // 60)
+                messages.error(request, f'تلاش‌های ناموفق زیاد بود. {minutes} دقیقه دیگر دوباره امتحان کن.')
+                return redirect('accounts:login')
+            except otp_service.OTPThrottledError:
+                messages.error(request, 'تعداد تلاش‌ها زیاد است. کمی صبر کن و دوباره تلاش کن.')
+                return redirect('accounts:verify')
+            except otp_service.OTPError:
+                messages.error(request, 'کد وارد شده اشتباه یا منقضی‌شده است.')
+                form = OTPVerifyForm()
+            else:
+                if user is not None:
+                    guest_session_key = request.session.session_key
+                    request.session[SESSION_GUEST_CART_KEY] = guest_session_key
+                    login(request, user, backend='accounts.backends.OTPBackend')
+                    _migrate_guest_cart_to_session(request)
+                    request.session.pop(SESSION_PHONE_KEY, None)
+                    next_url = request.session.pop(SESSION_NEXT_KEY, None)
+                    messages.success(request, 'خوش اومدی به آتلار 🌿')
+                    return redirect(next_url or settings.LOGIN_REDIRECT_URL)
+                messages.error(request, 'کد وارد شده اشتباه یا منقضی‌شده است.')
+                form = OTPVerifyForm()
     else:
         form = OTPVerifyForm()
 
-    cooldown = _recent_otp_cooldown_remaining(phone_number) or 0
+    cooldown = otp_service.cooldown_remaining(phone_number)
+    lockout = otp_service.phone_lockout_remaining(phone_number)
     return render(request, 'accounts/login_verify.html', {
         'form': form,
         'phone_number': phone_number,
+        'masked_phone_number': _masked_phone(phone_number),
         'cooldown': cooldown,
+        'lockout': lockout,
     })
 
 
@@ -133,15 +186,7 @@ def resend_otp_view(request):
     if not phone_number:
         return redirect('accounts:login')
 
-    remaining = _recent_otp_cooldown_remaining(phone_number)
-    if remaining:
-        messages.warning(request, f'{remaining} ثانیه دیگه می‌تونی دوباره درخواست بدی.')
-    else:
-        try:
-            _issue_otp(phone_number)
-            messages.success(request, 'کد جدید پیامک شد.')
-        except SMSSendError:
-            messages.error(request, 'ارسال پیامک با مشکل مواجه شد.')
+    _issue_and_send(request, phone_number)
     return redirect('accounts:verify')
 
 

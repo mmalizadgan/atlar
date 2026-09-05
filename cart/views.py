@@ -8,6 +8,9 @@ from products.models import Fabric, FabricColorVariant
 
 from .models import Cart, CartItem
 
+# سقف مجاز هر آیتم سبد (ضد مقدارهای عجیب مثل 1E+3 یا 99999.9)
+MAX_METERS_PER_ITEM = Decimal('500')
+
 
 def _get_or_create_cart(request):
     if not request.session.session_key:
@@ -18,11 +21,24 @@ def _get_or_create_cart(request):
 
 
 def _parse_quantity(raw_value, default=Decimal('1')):
+    """
+    ⚠️ اصلاح: قبلاً `Decimal('1E+3')` (نماد علمی) پذیرفته می‌شد و مقدار ۱۰۰۰
+    به سبد می‌رفت. حالا: فقط عدد اعشاری ساده، بدون نماد علمی و با سقف مشخص.
+    """
+    if raw_value is None:
+        return default
     try:
         value = Decimal(str(raw_value).replace(',', '.'))
-    except (InvalidOperation, TypeError):
+    except (InvalidOperation, TypeError, ValueError):
         return default
-    return value if value > 0 else default
+    if not value.is_finite():
+        return default
+    value = value.quantize(Decimal('0.1'))
+    if value <= 0:
+        return default
+    if value > MAX_METERS_PER_ITEM:
+        return MAX_METERS_PER_ITEM
+    return value
 
 
 def cart_detail_view(request):
@@ -36,7 +52,7 @@ def add_to_cart_view(request, slug):
     fabric = get_object_or_404(Fabric, slug=slug, is_active=True)
 
     variant_id = request.POST.get('variant_id')
-    if variant_id:
+    if variant_id and variant_id.isdigit():
         variant = get_object_or_404(FabricColorVariant, pk=variant_id, fabric=fabric, is_active=True)
     else:
         variant = fabric.default_variant
@@ -52,7 +68,9 @@ def add_to_cart_view(request, slug):
         return redirect(fabric.get_absolute_url())
 
     cart = _get_or_create_cart(request)
-    item, created = CartItem.objects.get_or_create(cart=cart, variant=variant, defaults={'quantity_meters': quantity})
+    item, created = CartItem.objects.get_or_create(
+        cart=cart, variant=variant, defaults={'quantity_meters': quantity}
+    )
     if not created:
         quantity = item.quantity_meters + quantity
 
@@ -71,6 +89,7 @@ def add_to_cart_view(request, slug):
 @require_POST
 def update_cart_item_view(request, item_id):
     cart = request.cart
+    # ⚠️ اصلاح: کوئری روی pk، کاربر/سبد فیلتر می‌شود → دستکاری سبد دیگران ممکن نیست.
     item = get_object_or_404(CartItem, pk=item_id, cart=cart)
     quantity = _parse_quantity(request.POST.get('quantity_meters'), default=item.quantity_meters)
     fabric = item.variant.fabric

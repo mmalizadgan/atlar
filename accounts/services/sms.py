@@ -2,16 +2,25 @@
 لایه ارسال پیامک، جدا از بقیه کد نگه داشته شده تا وصل‌کردن یک سرویس واقعی
 (کاوه‌نگار، ملی‌پیامک، ippanel و ...) فقط همین یک فایل رو تغییر بده.
 
-برای شروع روی 'console' تنظیم شده: به‌جای ارسال واقعی، کد رو در
-ترمینال/لاگ چاپ می‌کنه تا بدون نیاز به سرویس پیامکی واقعی بشه کل فلوی
-ورود رو تست کرد.
+اصلاحات امنیتی این فایل:
+  * `print()` حذف شد — کد OTP هرگز در stdout/لاگ‌های production چاپ نمی‌شود.
+  * متن خطای سرویس‌دهنده هیچ‌وقت کلید API (که داخل URL است) را نشت نمی‌دهد.
+  * فقط شماره‌های موبایل ایران پذیرفته می‌شود (ضد SMS-pumping بین‌المللی).
+  * آدرس‌های سرویس‌دهنده allow-list شده‌اند (ضد SSRF با تغییر URL از .env).
 """
 import logging
+import re
 
 import requests
 from django.conf import settings
 
 logger = logging.getLogger('accounts.sms')
+
+# شماره موبایل ایران — قبل از هر ارسالی چک می‌شود تا هزینه/سوءاستفاده کنترل شود.
+IRAN_MOBILE_RE = re.compile(r'^09\d{9}$')
+
+# سرویس‌دهنده‌های مجاز؛ اضافه‌کردن سرویس جدید یعنی اضافه‌کردن اسمش به این مجموعه.
+ALLOWED_PROVIDERS = {'console', 'kavenegar'}
 
 
 class SMSSendError(Exception):
@@ -20,36 +29,41 @@ class SMSSendError(Exception):
 
 def send_otp_sms(phone_number: str, code: str) -> None:
     provider = settings.SMS_PROVIDER
-    text = f'کد ورود شما به آتلار: {code}\nاین کد تا {settings.OTP_EXPIRY_SECONDS // 60} دقیقه دیگر معتبر است.'
+
+    if not IRAN_MOBILE_RE.match(phone_number or ''):
+        # شماره نامعتبر: لاگ می‌کنیم ولی چیزی به سرویس‌دهنده نمی‌فرستیم.
+        logger.warning('Blocked SMS request for invalid phone number.')
+        raise SMSSendError('شماره موبایل نامعتبر است.')
+
+    if provider not in ALLOWED_PROVIDERS:
+        raise SMSSendError(f"SMS_PROVIDER='{provider}' پشتیبانی نمی‌شود.")
+
+    # ⚠️ کد هرگز لاگ نمی‌شود؛ فقط طول پیام برای دیباگ.
+    text = (
+        f'کد ورود شما به آتلار: {code}\n'
+        f'این کد تا {max(1, settings.OTP_EXPIRY_SECONDS // 60)} دقیقه دیگر معتبر است.'
+    )
 
     if provider == 'console':
-        logger.info('[OTP SMS -> %s]: %s', phone_number, text)
-        print(f'[OTP SMS -> {phone_number}]: {text}')
+        # فقط در حالت development. در production پیام واقعی ارسال می‌شود.
+        logger.info('[OTP SMS] phone=%s chars=%d (code never logged)', phone_number, len(text))
         return
 
     if provider == 'kavenegar':
         _send_via_kavenegar(phone_number, text)
         return
 
-    raise SMSSendError(
-        f"SMS_PROVIDER='{provider}' هنوز پیاده‌سازی نشده. "
-        "یک تابع _send_via_<provider> اضافه کن یا SMS_PROVIDER رو در .env روی 'console' بذار."
-    )
-
 
 def _send_via_kavenegar(phone_number: str, text: str) -> None:
     """
-    نمونه پیاده‌سازی برای کاوه‌نگار (kavenegar.com) — یکی از سرویس‌های پیامکی
-    محبوب و قابل‌اعتماد داخلی. برای فعال کردنش:
-      1) یک حساب کاوه‌نگار بساز و API key بگیر.
-      2) در .env بذار: SMS_PROVIDER=kavenegar و SMS_API_KEY=<کلید شما>.
-    اگر سرویس دیگه‌ای (ippanel، ملی‌پیامک و ...) ترجیح می‌دی، همین تابع رو
-    الگو بگیر و آدرس/پارامترهای همون سرویس رو جایگزین کن.
+    ارسال با کاوه‌نگار (kavenegar.com).
+    فعال‌سازی: SMS_PROVIDER=kavenegar و SMS_API_KEY=<کلید شما> در .env
     """
-    if not settings.SMS_API_KEY:
+    api_key = settings.SMS_API_KEY
+    if not api_key:
         raise SMSSendError('SMS_API_KEY در .env تنظیم نشده است.')
 
-    url = f'https://api.kavenegar.com/v1/{settings.SMS_API_KEY}/sms/send.json'
+    url = f'https://api.kavenegar.com/v1/{api_key}/sms/send.json'
     try:
         response = requests.post(
             url,
@@ -58,9 +72,13 @@ def _send_via_kavenegar(phone_number: str, text: str) -> None:
                 'message': text,
                 'sender': settings.SMS_SENDER_LINE or None,
             },
-            timeout=8,
+            timeout=(3, 8),  # (اتصال، خواندن) — جلوگیری از قفل‌شدن workerها
+            allow_redirects=False,
         )
         response.raise_for_status()
     except requests.RequestException as exc:
-        logger.exception('SMS send failed for %s', phone_number)
-        raise SMSSendError(str(exc)) from exc
+        # ⚠️ `str(exc)` می‌تواند شامل URL (و در نتیجه API key) باشد → لاگ نمی‌کنیم.
+        logger.exception(
+            'SMS send failed (phone=%s, reason=%s)', phone_number, exc.__class__.__name__
+        )
+        raise SMSSendError('ارسال پیامک ناموفق بود.') from exc

@@ -10,7 +10,9 @@ admin.site.site_title = 'آتلار'
 admin.site.index_title = 'پنل مدیریت'
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # ⚠️ اصلاح: مسیر پنل ادمین از ADMIN_URL در .env خوانده می‌شود تا
+    # اسکنرهای خودکاری که /admin/ را تست می‌کنند بی‌نتیجه بمانند.
+    path(settings.ADMIN_URL, admin.site.urls),
     path('favicon.ico', RedirectView.as_view(url=static_url('favicon.ico'), permanent=True)),
     path('', include('core.urls')),
     path('accounts/', include('accounts.urls')),

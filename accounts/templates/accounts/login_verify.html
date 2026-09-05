@@ -6,17 +6,25 @@
   <div class="auth-card text-center">
     <h1 class="h4 mb-2">کد تایید رو وارد کن</h1>
     <p class="text-muted small mb-4">
-      کد ۵ رقمی برای شماره
-      <bdi class="fw-bold" dir="ltr">{{ phone_number }}</bdi>
+      کد به شماره
+      {# ⚠️ اصلاح: شماره کامل نمایش داده نمی‌شود (نشت اطلاعات در اسکرین‌شات/شارپ) #}
+      <bdi class="fw-bold" dir="ltr">{{ masked_phone_number|default:phone_number }}</bdi>
       پیامک شد.
     </p>
+
+    {% if lockout > 0 %}
+      <div class="alert alert-warning py-2 small">
+        این شماره موقتاً قفل شده است. حدود {{ lockout }} ثانیه صبر کن.
+      </div>
+    {% endif %}
+
     <form method="post" novalidate>
       {% csrf_token %}
       {% if form.code.errors %}
         <div class="alert alert-danger py-2 small">{{ form.code.errors.0 }}</div>
       {% endif %}
       {% render_field form.code %}
-      <button type="submit" class="btn btn-gold w-100 mt-3 py-2">تایید و ورود</button>
+      <button type="submit" class="btn btn-gold w-100 mt-3 py-2" {% if lockout > 0 %}disabled{% endif %}>تایید و ورود</button>
     </form>
 
     <form method="post" action="{% url 'accounts:resend_otp' %}" class="mt-3">
@@ -36,18 +44,17 @@
 {% if cooldown > 0 %}
 <script>
 (function () {
-  let remaining = {{ cooldown }};
+  let remaining = parseInt('{{ cooldown|escapejs }}', 10) || 0;
   const span = document.getElementById('resendCountdown');
   const btn = document.getElementById('resendBtn');
   const timer = setInterval(function () {
     remaining -= 1;
     if (remaining <= 0) {
       clearInterval(timer);
-      btn.disabled = false;
-      btn.textContent = 'ارسال مجدد کد';
+      if (btn) { btn.disabled = false; btn.textContent = 'ارسال مجدد کد'; }
       return;
     }
-    span.textContent = remaining;
+    if (span) { span.textContent = remaining; }
   }, 1000);
 })();
 </script>

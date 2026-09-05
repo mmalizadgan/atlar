@@ -1,12 +1,12 @@
+import secrets
 from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
-import secrets
-
 
 phone_validator = RegexValidator(
     regex=r'^09\d{9}$',
@@ -50,6 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     مشتری‌ها با OTP وارد می‌شوند (رمز عبور استفاده نمی‌شود)،
     ادمین‌ها با شماره موبایل + رمز عبور وارد پنل مدیریت می‌شوند.
     """
+
     phone_number = models.CharField(
         max_length=11, unique=True, validators=[phone_validator], verbose_name='شماره موبایل'
     )
@@ -79,31 +80,54 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.first_name or self.phone_number
 
 
-
+# ---------------------------------------------------------------------------
+# ⚠️ اصلاح امنیتی ۱ و ۲:
+#   قبل: random.choices(...) → ژنراتور Mersenne Twister (قابل پیش‌بینی)
+#   بعد:  secrets.choice → CSPRNG سیستم‌عامل ( crypto-grade )
+# ---------------------------------------------------------------------------
 def generate_otp_code():
+    """کد یک‌بارمصرف فقط با RNG رمزنگارانه (secrets) ساخته می‌شود."""
     length = getattr(settings, 'OTP_CODE_LENGTH', 6)
+    # ۶ رقمی = ۱۰۰٫۰۰۰ ترکیب؛ ۸ رقمی = ۱۰۰٫۰۰۰٫۰۰۰ ترکیب.
     return ''.join(secrets.choice('0123456789') for _ in range(length))
+
+
 def default_expiry():
-    seconds = getattr(settings, 'OTP_EXPIRY_SECONDS', 120)
+    seconds = getattr(settings, 'OTP_EXPIRY_SECONDS', 180)
     return timezone.now() + timedelta(seconds=seconds)
 
 
 class OTP(models.Model):
-    """کد یک‌بارمصرف پیامکی برای ورود/ثبت‌نام با شماره موبایل."""
+    """
+    کد یک‌بارمصرف پیامکی برای ورود/ثبت‌نام با شماره موبایل.
+
+    اصلاحات امنیتی این مدل:
+      * کد هرگز به‌صورت متن خام ذخیره نمی‌شود؛ فقط HMAC-SHA256 آن (code_hash).
+      * هر کد به session_key صادرکننده‌ی خودش گره خورده (session binding).
+      * attempts شمارش می‌شود و کد بعد از OTP_MAX_ATTEMPTS «سوزانده» می‌شود.
+    """
+
     phone_number = models.CharField(max_length=11, validators=[phone_validator], db_index=True)
-    code = models.CharField(max_length=8, default=generate_otp_code)
+    # جایگزین فیلد `code` — فقط هش کد ذخیره می‌شود.
+    code_hash = models.CharField(max_length=64, editable=False)
+    session_key = models.CharField(max_length=64, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(default=default_expiry)
     is_used = models.BooleanField(default=False)
     attempts = models.PositiveSmallIntegerField(default=0)
+    verified_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'کد یکبار مصرف'
         verbose_name_plural = 'کدهای یکبار مصرف'
-        indexes = [models.Index(fields=['phone_number', 'is_used', 'expires_at'])]
+        indexes = [
+            models.Index(fields=['phone_number', 'is_used', 'expires_at']),
+            models.Index(fields=['session_key']),
+        ]
 
     def __str__(self):
-        return f'{self.phone_number} - {self.code}'
+        # ⚠️ کد در هیچ reprای چاپ نمی‌شود (قبلاً `self.code` چاپ می‌شد).
+        return f'{self.phone_number} - {self.created_at:%Y-%m-%d %H:%M}'
 
     @property
     def is_expired(self):
@@ -112,7 +136,11 @@ class OTP(models.Model):
     @property
     def is_valid(self):
         max_attempts = getattr(settings, 'OTP_MAX_ATTEMPTS', 5)
-        return not self.is_used and not self.is_expired and self.attempts < max_attempts
+        return (
+            not self.is_used
+            and not self.is_expired
+            and self.attempts < max_attempts
+        )
 
 
 class Address(models.Model):

@@ -91,7 +91,16 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_number:
-            self.order_number = uuid.uuid4().hex[:10].upper()
+            # ⚠️ اصلاح: ۱۰ کاراکتر از uuid4 فقط ۴۰ بیت تصادفی است و با یک
+            # IntegrityError (خطای ۵۰۰) تمام می‌شود. حالا ۱۴ کاراکتر (۵۶ بیت)
+            # + تلاش مجدد در برابر تصادم.
+            for _ in range(5):
+                candidate = uuid.uuid4().hex[:14].upper()
+                if not Order.objects.filter(order_number=candidate).exists():
+                    self.order_number = candidate
+                    break
+            else:  # pragma: no cover - احتمال ناچیز
+                self.order_number = uuid.uuid4().hex[:20].upper()
         super().save(*args, **kwargs)
 
     @property
