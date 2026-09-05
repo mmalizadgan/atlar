@@ -45,8 +45,12 @@ def send_otp_sms(phone_number: str, code: str) -> None:
     )
 
     if provider == 'console':
-        # فقط در حالت development. در production پیام واقعی ارسال می‌شود.
-        logger.info('[OTP SMS] phone=%s chars=%d (code never logged)', phone_number, len(text))
+        if settings.DEBUG:
+            # فقط در توسعه‌ی محلی؛ بدون این هیچ راهی برای ورود در dev وجود نداشت.
+            logger.warning('[DEV ONLY][OTP SMS] phone=%s code=%s', phone_number, code)
+        else:
+            # ⚠️ در production با SMS_PROVIDER=console عملاً هیچ کاربری نمی‌تواند وارد شود.
+            logger.error('[OTP SMS] SMS_PROVIDER=console in production! phone=%s (code not logged)', phone_number)
         return
 
     if provider == 'kavenegar':

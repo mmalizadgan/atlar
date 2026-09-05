@@ -88,7 +88,10 @@ def _issue_and_send(request, phone_number):
             ip_address=otp_service.get_client_ip(request),
         )
     except otp_service.OTPCooldownError as exc:
-        messages.warning(request, f'کد قبلی هنوز معتبره. {exc.remaining_seconds} ثانیه دیگه دوباره تلاش کن.')
+        # ⚠️ اصلاح: قبلاً شماره در نشست ذخیره نمی‌شد → کاربر به صفحه‌ی لاگین برمی‌گشت
+        # و راهی برای واردکردن کدِ هنوز معتبر نداشت.
+        request.session[SESSION_PHONE_KEY] = phone_number
+        messages.warning(request, f'کد قبلی هنوز معتبره؛ همون رو وارد کن. ارسال مجدد تا {exc.remaining_seconds} ثانیه دیگه.')
         return
     except otp_service.OTPLockedOutError as exc:
         minutes = max(1, exc.remaining_seconds // 60)

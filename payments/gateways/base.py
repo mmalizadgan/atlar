@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 
@@ -13,5 +14,14 @@ class PaymentVerifyResult:
     ref_id: str = ''
     message: str = ''
     raw_response: dict | None = None
-    # ⚠️ جدید: مبلغ تاییدشده توسط درگاه — در callback با مبلغ سفارش مقایسه می‌شود.
     amount: int | None = None
+
+
+class PaymentGateway(ABC):
+    """رابط مشترک همه‌ی درگاه‌ها. (قبلاً تعریف نشده بود و bale_pay.py با ImportError می‌شکست.)"""
+
+    @abstractmethod
+    def request_payment(self, order, callback_url: str) -> PaymentRequestResult: ...
+
+    @abstractmethod
+    def verify_payment(self, request) -> PaymentVerifyResult: ...

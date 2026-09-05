@@ -17,6 +17,7 @@ from decimal import Decimal
 from unittest import mock
 
 from django.conf import settings
+from django.core.cache import cache
 from django.test import RequestFactory, TestCase, override_settings
 
 from cart.models import Cart, CartItem
@@ -27,7 +28,16 @@ from .services import otp as otp_service
 from .views import SESSION_GUEST_CART_KEY, _migrate_guest_cart_to_session
 
 
-class OTPGenerationTests(TestCase):
+@override_settings(OTP_RESEND_COOLDOWN_SECONDS=0)
+class OTPTestCase(TestCase):
+    """کش (شمارنده‌های نرخ/قفل) بین تست‌ها مشترک است؛ قبل از هر تست پاک می‌شود."""
+
+    def setUp(self):
+        super().setUp()
+        cache.clear()
+
+
+class OTPGenerationTests(OTPTestCase):
     def test_code_has_configured_length_and_only_digits(self):
         for _ in range(20):
             code = generate_otp_code()
@@ -40,7 +50,7 @@ class OTPGenerationTests(TestCase):
         self.assertGreater(len(codes), 40)
 
 
-class OTPStorageTests(TestCase):
+class OTPStorageTests(OTPTestCase):
     def test_code_is_stored_hashed_not_plaintext(self):
         otp = otp_service.issue_otp(phone_number='09121234567', session_key='sess-1')
         plain = otp.plain_code
@@ -67,7 +77,7 @@ class OTPStorageTests(TestCase):
             )
 
 
-class OTPBruteForceTests(TestCase):
+class OTPBruteForceTests(OTPTestCase):
     def test_code_burned_after_max_attempts(self):
         otp = otp_service.issue_otp(phone_number='09121234567', session_key='sess-1')
         for _ in range(settings.OTP_MAX_ATTEMPTS):
@@ -167,15 +177,18 @@ class GuestCartMigrationTests(TestCase):
         )
 
     def test_guest_cart_moves_to_new_session_after_login(self):
-        old_session_key = 'guest-old-123'
+        # نشست واقعی در دیتابیس ساخته می‌شود (session_key فقط‌خواندنی و باید در DB باشد)
+        session = self.client.session
+        session.create()
+        old_session_key = session.session_key
         cart = Cart.objects.create(session_key=old_session_key)
         CartItem.objects.create(cart=cart, variant=self.variant, quantity_meters=Decimal('2.5'))
 
+        session[SESSION_GUEST_CART_KEY] = old_session_key
+        session.save()
+
         request = self.factory.get('/')
-        request.session = self.client.session
-        request.session.session_key = old_session_key
-        request.session[SESSION_GUEST_CART_KEY] = old_session_key
-        request.session.save()
+        request.session = session
 
         request.session.cycle_key()
 

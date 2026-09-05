@@ -10,8 +10,17 @@ def normalize_digits(value: str) -> str:
     return (value or '').translate(PERSIAN_DIGITS)
 
 
+class NormalizedDigitsField(forms.CharField):
+    """ارقام فارسی/عربی را قبل از اجرای validatorها به لاتین تبدیل می‌کند.
+    (قبلاً validator روی مقدار خام اجرا می‌شد و «۰۹۱۲...» همیشه رد می‌شد.)"""
+
+    def to_python(self, value):
+        value = super().to_python(value)
+        return ''.join(normalize_digits(value).split())
+
+
 class PhoneNumberForm(forms.Form):
-    phone_number = forms.CharField(
+    phone_number = NormalizedDigitsField(
         label='شماره موبایل',
         max_length=11,
         validators=[phone_validator],
@@ -37,7 +46,7 @@ class PhoneNumberForm(forms.Form):
 
 
 class OTPVerifyForm(forms.Form):
-    code = forms.CharField(
+    code = NormalizedDigitsField(
         label='کد تایید',
         max_length=8,
         min_length=4,

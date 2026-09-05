@@ -43,7 +43,7 @@ class Order(models.Model):
         DELIVERED = 'delivered', 'تحویل داده‌شده'
         CANCELLED = 'cancelled', 'لغوشده'
 
-    order_number = models.CharField(max_length=12, unique=True, editable=False, blank=True)
+    order_number = models.CharField(max_length=20, unique=True, editable=False, blank=True)  # ⚠️ قبلاً 12 بود ولی 14/20 کاراکتر تولید می‌شد → DataError در هر checkout
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='orders')
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING_PAYMENT)
 
