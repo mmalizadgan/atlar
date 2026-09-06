@@ -221,9 +221,20 @@ OTP_LOCKOUT_MINUTES = config('OTP_LOCKOUT_MINUTES', default=15, cast=int)
 TRUST_PROXY_HEADERS = config('TRUST_PROXY_HEADERS', default=False, cast=bool)
 
 # SMS provider — pluggable, see accounts/services/sms.py
+# مقادیر مجاز: 'console' (فقط توسعه) | 'melipayamak' (ملی‌پیامک — production)
 SMS_PROVIDER = config('SMS_PROVIDER', default='console')
-SMS_API_KEY = config('SMS_API_KEY', default='')
+# خط فرستنده (برای ارسال ساده از خط اختصاصی ملی‌پیامک؛ در حالت پترن لازم نیست)
 SMS_SENDER_LINE = config('SMS_SENDER_LINE', default='')
+
+# ملی‌پیامک (melipayamak.com) — REST: https://rest.payamak-panel.com/api/SendSMS/
+MELIPAYAMAK_USERNAME = config('MELIPAYAMAK_USERNAME', default='')
+# API Key پنل؛ سرویس REST آن را در فیلد password می‌خواهد.
+MELIPAYAMAK_API_KEY = config('MELIPAYAMAK_API_KEY', default='')
+# نام قدیمی برای سازگاری با .envهای قبلی نگه داشته شده است.
+MELIPAYAMAK_PASSWORD = config('MELIPAYAMAK_PASSWORD', default='')
+# کد «متن پیش‌فرض» (bodyId) برای ارسال OTP از خط خدماتی اشتراکی/پترن — پیشنهادی.
+# اگر خالی باشد، پیامک به‌صورت ساده از SMS_SENDER_LINE ارسال می‌شود.
+MELIPAYAMAK_BODY_ID = config('MELIPAYAMAK_BODY_ID', default='')
 
 # -----------------------------------------------------------------------
 # Bale Pay (بله‌پی) settings
