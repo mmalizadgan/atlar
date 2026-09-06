@@ -18,10 +18,10 @@ class PaymentVerifyResult:
 
 
 class PaymentGateway(ABC):
-    """رابط مشترک همه‌ی درگاه‌ها. (قبلاً تعریف نشده بود و bale_pay.py با ImportError می‌شکست.)"""
+    """رابط مشترک درگاه‌های پرداخت."""
 
     @abstractmethod
     def request_payment(self, order, callback_url: str) -> PaymentRequestResult: ...
 
     @abstractmethod
-    def verify_payment(self, request) -> PaymentVerifyResult: ...
+    def verify_payment(self, request, expected_amount=None) -> PaymentVerifyResult: ...

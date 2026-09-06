@@ -10,7 +10,7 @@ class Payment(models.Model):
         FAILED = 'failed', 'ناموفق'
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='payments')
-    gateway = models.CharField(max_length=30, default='bale_pay')
+    gateway = models.CharField(max_length=30, default='zarinpal')
     amount = models.DecimalField(max_digits=12, decimal_places=0)
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.INITIATED)
 

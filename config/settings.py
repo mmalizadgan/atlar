@@ -237,11 +237,15 @@ MELIPAYAMAK_PASSWORD = config('MELIPAYAMAK_PASSWORD', default='')
 MELIPAYAMAK_BODY_ID = config('MELIPAYAMAK_BODY_ID', default='')
 
 # -----------------------------------------------------------------------
-# Bale Pay (بله‌پی) settings
+# Zarinpal payment settings
 # -----------------------------------------------------------------------
-BALE_PAY_MERCHANT_ID = config('BALE_PAY_MERCHANT_ID', default='')
-BALE_PAY_API_KEY = config('BALE_PAY_API_KEY', default='')
-BALE_PAY_CALLBACK_PATH = '/payments/bale/callback/'
+# در sandbox نیازی به Merchant ID واقعی یا API Key نیست؛ زرین‌پال یک UUID متنی
+# دلخواه قبول می‌کند. برای production این مقدار باید در .env جایگزین شود.
+ZARINPAL_MERCHANT_ID = config(
+    'ZARINPAL_MERCHANT_ID',
+    default='3f2504e0-4f89-41d3-9a0c-0305e82c3301',
+)
+ZARINPAL_SANDBOX = config('ZARINPAL_SANDBOX', default=True, cast=bool)
 SITE_BASE_URL = config('SITE_BASE_URL', default='http://127.0.0.1:8000')
 SITE_NAME = 'آتلار'
 

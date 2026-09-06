@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -11,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 from orders.models import Order
 from orders.views import release_order_stock
 
-from .gateways.bale_pay import BalePayGateway, get_callback_url
+from .gateways.zarinpal import ZarinpalGateway, get_callback_url
 from .models import Payment
 
 logger = logging.getLogger('payments')
@@ -43,18 +44,19 @@ def initiate_payment_view(request, order_number):
             return redirect('orders:detail', order_number=order.order_number)
         payment = Payment.objects.create(order=order, amount=order.total)
 
-    gateway = BalePayGateway()
+    gateway = ZarinpalGateway()
     try:
         result = gateway.request_payment(order, callback_url=get_callback_url(request))
-    except Exception:
+    except Exception as exc:
         logger.exception('payment initiation failed (order=%s)', order.order_number)
         payment.status = Payment.Status.FAILED
         payment.save(update_fields=['status'])
+        detail = f' جزئیات: {exc}' if settings.DEBUG else ''
         messages.error(
             request,
-            'اتصال به درگاه بله‌پی هنوز کامل نشده (احتمالاً BALE_PAY_MERCHANT_ID / '
-            'BALE_PAY_API_KEY در .env خالیه یا آدرس API نهایی نشده). سفارشت ذخیره‌ست، '
-            'بعد از تنظیم درگاه می‌تونی دوباره تلاش کن.',
+            'اتصال به درگاه زرین‌پال هنوز کامل نشده (احتمالاً ZARINPAL_MERCHANT_ID '
+            f'در .env خالیه یا آدرس API در دسترس نیست).{detail} '
+            'سفارشت ذخیره‌ست، بعد از تنظیم درگاه می‌تونی دوباره تلاش کن.',
         )
         return redirect('orders:detail', order_number=order.order_number)
 
@@ -65,7 +67,7 @@ def initiate_payment_view(request, order_number):
 
 @csrf_exempt
 @require_http_methods(['GET', 'POST'])
-def bale_callback_view(request):
+def zarinpal_callback_view(request):
     """
     ⚠️ اصلاحات مهم در callback درگاه:
       ۱) idempotent شد — تکرار callback دیگر موجودی را دوباره کسر/سفارش را دوباره
@@ -76,10 +78,7 @@ def bale_callback_view(request):
          (کد قبلی `item.fabric_id` نداشت → AttributeError و موجودی هیچ‌وقت کم نمی‌شد.)
       ۵) خطای درگاه دیگر ۵۰۰ نمی‌دهد.
     """
-    gateway = BalePayGateway()
-    result = gateway.verify_payment(request)
-
-    token = (request.GET.get('token') or request.POST.get('token') or '').strip()
+    token = (request.GET.get('Authority') or request.POST.get('Authority') or '').strip()
     if not token:
         messages.error(request, 'تراکنش پیدا نشد.')
         return redirect('core:home')
@@ -88,6 +87,9 @@ def bale_callback_view(request):
     if payment is None:
         messages.error(request, 'تراکنش پیدا نشد.')
         return redirect('core:home')
+
+    gateway = ZarinpalGateway()
+    result = gateway.verify_payment(request, expected_amount=payment.amount)
 
     order = payment.order
 
