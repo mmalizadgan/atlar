@@ -8,6 +8,17 @@
     <div class="col-lg-7">
       <form method="post" novalidate>
         {% csrf_token %}
+        <div class="mb-4">
+          <label class="form-label">{{ form.gateway.label }}</label>
+          <div class="d-grid gap-2">
+            {% for radio in form.gateway %}
+              <label class="border rounded p-3 d-flex align-items-center gap-2">
+                {{ radio.tag }} <span>{{ radio.choice_label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+          {% if form.gateway.errors %}<div class="text-danger small mt-1">{{ form.gateway.errors.0 }}</div>{% endif %}
+        </div>
         <div class="mb-3">
           <label class="form-label">{{ form.full_name.label }}</label>
           {% render_field form.full_name %}
@@ -35,7 +46,7 @@
           {% render_field form.postal_code %}
           {% if form.postal_code.errors %}<div class="text-danger small mt-1">{{ form.postal_code.errors.0 }}</div>{% endif %}
         </div>
-        <button type="submit" class="btn btn-gold w-100 py-2">پرداخت با زرین پال</button>
+        <button type="submit" class="btn btn-gold w-100 py-2">پرداخت با بله‌پی</button>
       </form>
     </div>
 

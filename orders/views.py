@@ -109,7 +109,11 @@ def checkout_view(request):
                 messages.error(request, str(exc))
                 return redirect('cart:detail')
 
-            return redirect('payments:initiate', order_number=order.order_number)
+            return redirect(
+                'payments:initiate_with_gateway',
+                order_number=order.order_number,
+                gateway=form.cleaned_data['gateway'],
+            )
     else:
         form = CheckoutForm(initial=initial)
 

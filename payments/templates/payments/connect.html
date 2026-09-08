@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}اتصال به بله | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<section class="container py-5" style="max-width:620px;">
+  <div class="text-center">
+    <h1 class="h3 mb-3">اتصال حساب بله</h1>
+    <p class="text-muted mb-4">برای پرداخت سفارش {{ order.order_number }}، حساب بله‌ات را به فروشگاه متصل کن.</p>
+    {% if connect_link %}
+      <a class="btn btn-gold px-4" href="{{ connect_link }}" target="_blank" rel="noopener">باز کردن ربات بله</a>
+      <p id="connection-message" class="small text-muted mt-4">بعد از زدن Start، این صفحه خودکار ادامه می‌دهد.</p>
+    {% else %}
+      <div class="alert alert-danger">نام کاربری ربات بله تنظیم نشده است.</div>
+    {% endif %}
+  </div>
+</section>
+{% if connect_link %}
+<script>
+(function () {
+  const statusUrl = "{% url 'payments:connection_status' %}";
+  const nextUrl = "{% url 'payments:initiate_with_gateway' order.order_number gateway %}";
+  const message = document.getElementById('connection-message');
+  const timer = setInterval(async function () {
+    try {
+      const response = await fetch(statusUrl, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+      const data = await response.json();
+      if (data.connected) {
+        clearInterval(timer);
+        message.textContent = 'حساب متصل شد؛ در حال آماده‌سازی فاکتور...';
+        window.location.href = nextUrl;
+      }
+    } catch (error) {
+      // The next poll retries transient network failures.
+    }
+  }, 2000);
+}());
+</script>
+{% endif %}
+{% endblock %}

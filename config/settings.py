@@ -237,7 +237,14 @@ MELIPAYAMAK_PASSWORD = config('MELIPAYAMAK_PASSWORD', default='')
 MELIPAYAMAK_BODY_ID = config('MELIPAYAMAK_BODY_ID', default='')
 
 # -----------------------------------------------------------------------
-# Zarinpal payment settings
+# Bale Pay payment settings
+# توکن BotFather و توکن پذیرنده را در .env قرار دهید؛ این دو مقدار در کد ذخیره نمی‌شوند.
+BALEPAY_BOT_TOKEN = config('BALEPAY_BOT_TOKEN', default='')
+BALEPAY_PROVIDER_TOKEN = config('BALEPAY_PROVIDER_TOKEN', default='')
+BALEPAY_BOT_USERNAME = config('BALEPAY_BOT_USERNAME', default='')
+BALEPAY_WEBHOOK_SECRET = config('BALEPAY_WEBHOOK_SECRET', default='')
+
+# Legacy Zarinpal settings are kept so existing configuration does not break.
 # -----------------------------------------------------------------------
 # در sandbox نیازی به Merchant ID واقعی یا API Key نیست؛ زرین‌پال یک UUID متنی
 # دلخواه قبول می‌کند. برای production این مقدار باید در .env جایگزین شود.

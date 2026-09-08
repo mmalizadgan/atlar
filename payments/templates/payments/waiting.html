@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}انتظار پرداخت | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<section class="container py-5" style="max-width:620px;">
+  <div class="text-center">
+    <h1 class="h3 mb-3">فاکتور بله ارسال شد</h1>
+    <p id="payment-message" class="text-muted">پرداخت را در گفت‌وگوی ربات بله تأیید کن. این صفحه نتیجه را بررسی می‌کند.</p>
+    <a class="btn btn-outline-secondary mt-3" href="{% url 'orders:detail' order.order_number %}">بازگشت به سفارش</a>
+  </div>
+</section>
+<script>
+(function () {
+  const statusUrl = "{% url 'payments:status' order.order_number %}";
+  const successUrl = "{% url 'orders:success' order.order_number %}";
+  const message = document.getElementById('payment-message');
+  const timer = setInterval(async function () {
+    try {
+      const response = await fetch(statusUrl, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+      const data = await response.json();
+      if (data.paid) {
+        clearInterval(timer);
+        window.location.href = successUrl;
+      } else if (data.payment_status === 'failed') {
+        clearInterval(timer);
+        message.textContent = 'پرداخت انجام نشد. می‌توانی دوباره تلاش کنی.';
+      }
+    } catch (error) {
+      // The next poll retries transient network failures.
+    }
+  }, 2500);
+}());
+</script>
+{% endblock %}

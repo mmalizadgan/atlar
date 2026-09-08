@@ -4,6 +4,15 @@ from accounts.models import phone_validator
 
 
 class CheckoutForm(forms.Form):
+    gateway = forms.ChoiceField(
+        label='روش پرداخت',
+        choices=(
+            ('zarinpal', 'زرین‌پال (sandbox)'),
+            ('balepay', 'بله‌پی'),
+        ),
+        initial='zarinpal',
+        widget=forms.RadioSelect,
+    )
     full_name = forms.CharField(
         label='نام و نام خانوادگی گیرنده', max_length=120,
         widget=forms.TextInput(attrs={'class': 'form-control'}),
