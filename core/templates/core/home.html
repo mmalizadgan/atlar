@@ -91,6 +91,9 @@
       <a href="{{ category.get_absolute_url }}" class="category-chip">{{ category.name }}</a>
     {% endfor %}
   </div>
+  <form class="mobile-category-search" role="search" action="{% url 'products:fabric_list' %}" method="get">
+    <input class="form-control" type="search" name="q" placeholder="جست‌وجوی پارچه…" aria-label="جست‌وجو">
+  </form>
 </section>
 {% endif %}
 

@@ -17,58 +17,52 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg site-navbar sticky-top py-3">
+<nav class="navbar navbar-expand-md site-navbar fixed-top py-3">
   <div class="container">
-   <a href="{% url 'core:home' %}" class="logo">
-    ATLAR
-</a>
-    <div class="d-flex align-items-center gap-2 ms-auto">
-      {% if not user.is_authenticated %}
-        <a class="btn btn-gold btn-sm px-3 d-lg-none" href="{% url 'accounts:login' %}">ورود / ثبت‌نام</a>
-      {% endif %}
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="باز کردن منو">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-    </div>
+    <a href="{% url 'core:home' %}" class="logo">
+      ATLAR
+    </a>
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="{% url 'core:home' %}">خانه</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'products:fabric_list' %}">پارچه‌ها</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'core:home' %}"><span class="nav-icon home-icon" aria-hidden="true"></span>خانه</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'products:fabric_list' %}"><span class="nav-icon fabric-icon" aria-hidden="true"></span>پارچه‌ها</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'core:about' %}">درباره ما</a></li>
       </ul>
-      <form class="d-flex me-lg-3 my-2 my-lg-0" role="search" action="{% url 'products:fabric_list' %}" method="get">
-        <input class="form-control form-control-sm" type="search" name="q" placeholder="جست‌وجوی پارچه…" aria-label="جست‌وجو" style="min-width:200px;">
+      <form class="navbar-search d-flex me-xl-3 my-2 my-xl-0" role="search" action="{% url 'products:fabric_list' %}" method="get">
+        <input class="form-control form-control-sm" type="search" name="q" placeholder="جست‌وجوی پارچه…" aria-label="جست‌وجو">
       </form>
-      <ul class="navbar-nav align-items-lg-center gap-lg-2">
-        <li class="nav-item">
-          <a class="nav-link position-relative" href="{% url 'cart:detail' %}">
-            سبد خرید
-            {% if cart_item_count %}
-              <span class="badge rounded-pill cart-badge align-text-top">{{ cart_item_count }}</span>
-            {% endif %}
-          </a>
-        </li>
-        {% if user.is_authenticated %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              {{ user.get_short_name }}
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">حساب کاربری</a></li>
-              <li><a class="dropdown-item" href="{% url 'orders:history' %}">سفارش‌های من</a></li>
-              {% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}">پنل مدیریت</a></li>{% endif %}
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
-                  <button type="submit" class="dropdown-item">خروج</button>
-                </form>
-              </li>
-            </ul>
-          </li>
-        {% else %}
-          <li class="nav-item d-none d-lg-block"><a class="btn btn-gold btn-sm px-3" href="{% url 'accounts:login' %}">ورود / ثبت‌نام</a></li>
+    </div>
+    <div class="navbar-actions d-flex align-items-center gap-2">
+      <a class="nav-link navbar-cart position-relative" href="{% url 'cart:detail' %}">
+        <span class="nav-icon cart-icon" aria-hidden="true"></span>
+        سبد خرید
+        {% if cart_item_count %}
+          <span class="badge rounded-pill cart-badge">{{ cart_item_count }}</span>
         {% endif %}
-      </ul>
+      </a>
+      {% if user.is_authenticated %}
+        <div class="nav-item dropdown navbar-account">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {{ user.get_short_name }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">حساب کاربری</a></li>
+            <li><a class="dropdown-item" href="{% url 'orders:history' %}">سفارش‌های من</a></li>
+            {% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}">پنل مدیریت</a></li>{% endif %}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+                <button type="submit" class="dropdown-item">خروج</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      {% else %}
+        <a class="btn btn-gold btn-sm px-3 navbar-auth" href="{% url 'accounts:login' %}">ورود / ثبت‌نام</a>
+      {% endif %}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="باز کردن منو">
+        <span class="navbar-toggler-icon"></span>
+      </button>
     </div>
   </div>
 </nav>
