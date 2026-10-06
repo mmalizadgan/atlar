@@ -5,7 +5,8 @@ from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import models, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 phone_validator = RegexValidator(
@@ -151,10 +152,15 @@ class Address(models.Model):
         verbose_name='کاربر',
     )
     title = models.CharField('عنوان آدرس', max_length=80, blank=True, default='آدرس اصلی')
-    address_line = models.CharField('آدرس', max_length=300)
-    city = models.CharField('شهر', max_length=80)
-    postal_code = models.CharField('کد پستی', max_length=10)
+    recipient_name = models.CharField('نام گیرنده', max_length=120, blank=True, default='')
     phone_number = models.CharField('شماره تماس', max_length=11, validators=[phone_validator])
+    province = models.CharField('استان', max_length=80, blank=True, default='')
+    city = models.CharField('شهر', max_length=80)
+    address_line = models.CharField('آدرس کامل', max_length=300)
+    postal_code = models.CharField('کد پستی', max_length=10, blank=True, default='')
+    plate = models.CharField('پلاک', max_length=20, blank=True, default='')
+    unit = models.CharField('واحد', max_length=20, blank=True, default='')
+    notes = models.CharField('توضیحات اضافی', max_length=300, blank=True, default='')
     is_default = models.BooleanField('پیش‌فرض', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -162,6 +168,39 @@ class Address(models.Model):
         verbose_name = 'آدرس'
         verbose_name_plural = 'آدرس‌ها'
         ordering = ['-is_default', '-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=Q(is_default=True),
+                name='unique_default_address_per_user',
+            )
+        ]
 
     def __str__(self):
         return f'{self.user.get_full_name() or self.user.phone_number} - {self.city}'
+
+    def save(self, *args, **kwargs):
+        force_insert = kwargs.pop('force_insert', False)
+        force_update = kwargs.pop('force_update', False)
+        using = kwargs.pop('using', None)
+
+        with transaction.atomic(using=using):
+            if self.is_default:
+                Address.objects.filter(user=self.user, is_default=True).exclude(pk=self.pk).update(is_default=False)
+            elif not self.pk and not self.user.addresses.filter(is_default=True).exists():
+                self.is_default = True
+
+            super().save(*args, force_insert=force_insert, force_update=force_update, using=using, **kwargs)
+
+            if self.is_default:
+                Address.objects.filter(user=self.user, is_default=True).exclude(pk=self.pk).update(is_default=False)
+
+    def delete(self, *args, **kwargs):
+        was_default = self.is_default
+        user = self.user
+        super().delete(*args, **kwargs)
+        if was_default:
+            next_default = Address.objects.filter(user=user).order_by('-created_at').first()
+            if next_default:
+                next_default.is_default = True
+                next_default.save(update_fields=['is_default'])

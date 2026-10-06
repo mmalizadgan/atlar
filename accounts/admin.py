@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import OTP, User
+from .models import Address, OTP, User
 
 
 @admin.register(User)
@@ -26,6 +26,21 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
     filter_horizontal = ['groups', 'user_permissions']
+
+
+@admin.register(Address)
+class AddressAdmin(admin.ModelAdmin):
+    list_display = ['user', 'title', 'recipient_name', 'city', 'phone_number', 'is_default', 'created_at']
+    list_filter = ['is_default', 'province', 'city', 'created_at']
+    search_fields = ['user__phone_number', 'user__first_name', 'user__last_name', 'recipient_name', 'city', 'address_line']
+    readonly_fields = ['created_at']
+    fieldsets = (
+        ('کاربر', {'fields': ('user', 'title', 'is_default')}),
+        ('گیرنده', {'fields': ('recipient_name', 'phone_number')}),
+        ('موقعیت', {'fields': ('province', 'city', 'address_line', 'postal_code', 'plate', 'unit')}),
+        ('توضیحات', {'fields': ('notes',)}),
+        ('تاریخ', {'fields': ('created_at',)}),
+    )
 
 
 @admin.register(OTP)

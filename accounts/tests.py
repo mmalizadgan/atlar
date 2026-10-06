@@ -19,11 +19,13 @@ from unittest import mock
 from django.conf import settings
 from django.core.cache import cache
 from django.test import RequestFactory, TestCase, override_settings
+from django.urls import reverse
 
 from cart.models import Cart, CartItem
+from orders.models import Order
 from products.models import Category, Fabric, FabricColorVariant
 
-from .models import OTP, generate_otp_code
+from .models import Address, OTP, User, generate_otp_code
 from .services import otp as otp_service
 from .views import SESSION_GUEST_CART_KEY, _migrate_guest_cart_to_session
 
@@ -200,3 +202,106 @@ class GuestCartMigrationTests(TestCase):
         self.assertEqual(migrated_cart.items.first().quantity_meters, Decimal('2.5'))
         self.assertFalse(Cart.objects.filter(session_key=old_session_key).exists())
         self.assertNotIn(SESSION_GUEST_CART_KEY, request.session)
+
+
+class AccountAddressManagementTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(phone_number='09120000000', first_name='میلاد', last_name='علیزاده')
+        self.other_user = User.objects.create_user(phone_number='09121111111', first_name='حسین', last_name='حسینی')
+
+    def test_first_address_is_set_as_default(self):
+        address = Address.objects.create(
+            user=self.user,
+            title='خانه',
+            recipient_name='میلاد علیزاده',
+            phone_number='09120000000',
+            province='تهران',
+            city='تهران',
+            address_line='خیابان ولیعصر',
+            postal_code='1234567890',
+        )
+        self.assertTrue(address.is_default)
+
+    def test_switching_default_moves_previous_default_to_non_default(self):
+        first = Address.objects.create(
+            user=self.user,
+            title='خانه',
+            recipient_name='میلاد علیزاده',
+            phone_number='09120000000',
+            province='تهران',
+            city='تهران',
+            address_line='خیابان ولیعصر',
+            postal_code='1234567890',
+        )
+        second = Address.objects.create(
+            user=self.user,
+            title='محل کار',
+            recipient_name='میلاد علیزاده',
+            phone_number='09120000000',
+            province='تهران',
+            city='تهران',
+            address_line='خیابان انقلاب',
+            postal_code='1234567890',
+        )
+
+        second.is_default = True
+        second.save()
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertFalse(first.is_default)
+        self.assertTrue(second.is_default)
+
+    def test_order_snapshot_retains_original_address_after_user_changes_saved_address(self):
+        address = Address.objects.create(
+            user=self.user,
+            title='خانه',
+            recipient_name='میلاد علیزاده',
+            phone_number='09120000000',
+            province='تهران',
+            city='تهران',
+            address_line='خیابان ولیعصر',
+            postal_code='1234567890',
+        )
+        order = Order.objects.create(
+            user=self.user,
+            full_name='میلاد علیزاده',
+            phone_number='09120000000',
+            email='test@example.com',
+            address=address,
+            address_line='خیابان ولیعصر',
+            city='تهران',
+            postal_code='1234567890',
+            subtotal=Decimal('100000'),
+            shipping_cost=Decimal('0'),
+            total=Decimal('100000'),
+        )
+
+        address.address_line = 'خیابان شریعتی'
+        address.save(update_fields=['address_line'])
+
+        order.refresh_from_db()
+        self.assertEqual(order.address_line, 'خیابان ولیعصر')
+
+    def test_other_users_addresses_are_not_accessible(self):
+        other_address = Address.objects.create(
+            user=self.other_user,
+            title='خانه دیگری',
+            recipient_name='حسین حسینی',
+            phone_number='09121111111',
+            province='تهران',
+            city='تهران',
+            address_line='خیابان کارگر',
+            postal_code='1234567890',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('accounts:address_edit', args=[other_address.pk]))
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.post(
+            reverse('accounts:address_delete', args=[other_address.pk]),
+            {'csrfmiddlewaretoken': 'test'},
+            follow=False,
+        )
+        self.assertEqual(response.status_code, 404)

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}{{ title }} | {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="fabric-card p-4 p-md-5">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+          <div>
+            <h1 class="section-title h3 mb-1">{{ title }}</h1>
+            <p class="text-muted mb-0">اطلاعات آدرس شما برای سفارش‌های آینده ذخیره می‌شود.</p>
+          </div>
+          <a href="{% url 'accounts:profile' %}" class="btn btn-outline-navy btn-sm">بازگشت به حساب</a>
+        </div>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">{% include 'includes/form_field.html' with field=form.title %}</div>
+            <div class="col-md-6">{% include 'includes/form_field.html' with field=form.recipient_name %}</div>
+            <div class="col-md-6">{% include 'includes/form_field.html' with field=form.phone_number %}</div>
+            <div class="col-md-6">{% include 'includes/form_field.html' with field=form.province %}</div>
+            <div class="col-md-6">{% include 'includes/form_field.html' with field=form.city %}</div>
+            <div class="col-md-6">{% include 'includes/form_field.html' with field=form.postal_code %}</div>
+            <div class="col-md-6">{% include 'includes/form_field.html' with field=form.plate %}</div>
+            <div class="col-md-6">{% include 'includes/form_field.html' with field=form.unit %}</div>
+            <div class="col-12">{% include 'includes/form_field.html' with field=form.address_line %}</div>
+            <div class="col-12">{% include 'includes/form_field.html' with field=form.notes %}</div>
+            <div class="col-12">
+              <div class="form-check mt-2">
+                {{ form.is_default }}
+                <label class="form-check-label me-2" for="{{ form.is_default.id_for_label }}">{{ form.is_default.label }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-navy">انصراف</a>
+            <button type="submit" class="btn btn-navy">ذخیره آدرس</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

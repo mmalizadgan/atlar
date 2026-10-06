@@ -2,13 +2,15 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
 from cart.models import Cart
 
-from .forms import OTPVerifyForm, PhoneNumberForm, ProfileForm
+from .forms import AddressForm, OTPVerifyForm, PhoneNumberForm, ProfileForm
+from .models import Address
 from .services import otp as otp_service
 from .services.sms import SMSSendError, send_otp_sms
 
@@ -214,10 +216,108 @@ def profile_view(request):
     else:
         form = ProfileForm(initial={'full_name': request.user.get_full_name()})
 
+    orders = request.user.orders.all().order_by('-created_at')[:5]
     orders_count = request.user.orders.count()
     total_spend = sum((order.total for order in request.user.orders.all()), 0)
+    default_address = request.user.addresses.filter(is_default=True).first()
+    addresses = request.user.addresses.all()
+
     return render(request, 'accounts/profile.html', {
         'form': form,
+        'orders': orders,
         'orders_count': orders_count,
         'total_spend': total_spend,
+        'addresses': addresses,
+        'default_address': default_address,
+        'address_form': AddressForm(),
     })
+
+
+@login_required
+def address_create_view(request):
+    if request.method == 'POST':
+        form = AddressForm(request.POST)
+        if form.is_valid():
+            address = Address.objects.create(
+                user=request.user,
+                title=form.cleaned_data['title'],
+                recipient_name=form.cleaned_data['recipient_name'],
+                phone_number=form.cleaned_data['phone_number'],
+                province=form.cleaned_data['province'],
+                city=form.cleaned_data['city'],
+                address_line=form.cleaned_data['address_line'],
+                postal_code=form.cleaned_data['postal_code'],
+                plate=form.cleaned_data['plate'],
+                unit=form.cleaned_data['unit'],
+                notes=form.cleaned_data['notes'],
+                is_default=form.cleaned_data['is_default'],
+            )
+            messages.success(request, 'آدرس جدید با موفقیت اضافه شد.')
+            return redirect('accounts:profile')
+    else:
+        form = AddressForm()
+    return render(request, 'accounts/address_form.html', {'form': form, 'title': 'افزودن آدرس'})
+
+
+@login_required
+def address_edit_view(request, pk):
+    address = get_object_or_404(Address.objects.filter(user=request.user), pk=pk)
+    if request.method == 'POST':
+        form = AddressForm(request.POST)
+        if form.is_valid():
+            address.title = form.cleaned_data['title']
+            address.recipient_name = form.cleaned_data['recipient_name']
+            address.phone_number = form.cleaned_data['phone_number']
+            address.province = form.cleaned_data['province']
+            address.city = form.cleaned_data['city']
+            address.address_line = form.cleaned_data['address_line']
+            address.postal_code = form.cleaned_data['postal_code']
+            address.plate = form.cleaned_data['plate']
+            address.unit = form.cleaned_data['unit']
+            address.notes = form.cleaned_data['notes']
+            address.is_default = form.cleaned_data['is_default']
+            address.save()
+            messages.success(request, 'آدرس با موفقیت ویرایش شد.')
+            return redirect('accounts:profile')
+    else:
+        form = AddressForm(initial={
+            'title': address.title,
+            'recipient_name': address.recipient_name,
+            'phone_number': address.phone_number,
+            'province': address.province,
+            'city': address.city,
+            'address_line': address.address_line,
+            'postal_code': address.postal_code,
+            'plate': address.plate,
+            'unit': address.unit,
+            'notes': address.notes,
+            'is_default': address.is_default,
+        })
+    return render(request, 'accounts/address_form.html', {'form': form, 'title': 'ویرایش آدرس', 'address': address})
+
+
+@login_required
+def address_delete_view(request, pk):
+    address = get_object_or_404(Address.objects.filter(user=request.user), pk=pk)
+    if request.method == 'POST':
+        with transaction.atomic():
+            was_default = address.is_default
+            address.delete()
+            if was_default:
+                fallback = request.user.addresses.order_by('-created_at').first()
+                if fallback:
+                    fallback.is_default = True
+                    fallback.save(update_fields=['is_default'])
+        messages.success(request, 'آدرس حذف شد.')
+    return redirect('accounts:profile')
+
+
+@login_required
+def address_set_default_view(request, pk):
+    address = get_object_or_404(Address.objects.filter(user=request.user), pk=pk)
+    with transaction.atomic():
+        request.user.addresses.filter(is_default=True).exclude(pk=pk).update(is_default=False)
+        address.is_default = True
+        address.save(update_fields=['is_default'])
+    messages.success(request, 'آدرس پیش‌فرض تغییر کرد.')
+    return redirect('accounts:profile')

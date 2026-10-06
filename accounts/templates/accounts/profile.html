@@ -1,12 +1,22 @@
 {% extends "base.html" %}
-{% load widget_tweaks %}
+{% load widget_tweaks price_filters %}
 {% block title %}حساب کاربری | {{ site_settings.site_name }}{% endblock %}
 {% block content %}
 <div class="container py-5">
-  <div class="row g-4 justify-content-center">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="section-title h3 mb-1">حساب کاربری</h1>
+      <p class="text-muted mb-0">سلام {{ user.get_full_name|default:user.phone_number }}</p>
+    </div>
+    <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+      <button type="submit" class="btn btn-outline-navy">خروج از حساب</button>
+    </form>
+  </div>
+
+  <div class="row g-4">
     <div class="col-lg-4">
       <div class="fabric-card p-4 h-100">
-        <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="d-flex align-items-center gap-3 mb-4">
           <div class="rounded-circle bg-navy text-white d-flex align-items-center justify-content-center" style="width:56px;height:56px;font-size:1.2rem;font-weight:700;">
             {{ user.get_short_name|first|default:'م' }}
           </div>
@@ -21,7 +31,8 @@
           <div class="fw-bold" dir="ltr">{{ user.phone_number }}</div>
         </div>
 
-        <a href="{% url 'orders:history' %}" class="btn btn-gold w-100">مشاهده سفارش‌های من</a>
+        <a href="{% url 'orders:history' %}" class="btn btn-gold w-100 mb-2">مشاهده سفارش‌های من</a>
+        <a href="{% url 'products:fabric_list' %}" class="btn btn-outline-navy w-100">شروع خرید جدید</a>
       </div>
     </div>
 
@@ -41,16 +52,98 @@
         </div>
       </div>
 
-      <div class="fabric-card p-4">
-        <h1 class="section-title h4 mb-3">اطلاعات شخصی</h1>
+      <div class="fabric-card p-4 mb-4">
+        <h2 class="h5 mb-3">اطلاعات شخصی</h2>
         <form method="post" novalidate>
           {% csrf_token %}
           <div class="mb-3">
             <label class="form-label">{{ form.full_name.label }}</label>
             {% render_field form.full_name %}
+            {% if form.full_name.errors %}<div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">شماره موبایل</label>
+            <input class="form-control" type="text" value="{{ user.phone_number }}" dir="ltr" disabled>
           </div>
           <button type="submit" class="btn btn-navy">ذخیره تغییرات</button>
         </form>
+      </div>
+
+      <div class="fabric-card p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+          <h2 class="h5 mb-0">آدرس‌های من</h2>
+          <a href="{% url 'accounts:address_add' %}" class="btn btn-gold btn-sm">+ افزودن آدرس جدید</a>
+        </div>
+
+        {% if default_address %}
+          <div class="alert alert-light border mb-3">
+            <div class="fw-bold mb-1">آدرس پیش‌فرض</div>
+            <div>{{ default_address.title }} — {{ default_address.province }}، {{ default_address.city }}، {{ default_address.address_line }}</div>
+          </div>
+        {% endif %}
+
+        {% if addresses %}
+          <div class="row g-3">
+            {% for address in addresses %}
+              <div class="col-12">
+                <div class="border rounded p-3 {% if address.is_default %}border-warning{% endif %}">
+                  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                    <div>
+                      <strong>{{ address.title }}</strong>
+                      {% if address.is_default %}<span class="badge bg-warning text-dark mx-2">پیش‌فرض</span>{% endif %}
+                    </div>
+                    <div class="d-flex gap-2">
+                      {% if not address.is_default %}
+                        <form method="post" action="{% url 'accounts:address_set_default' address.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-navy" type="submit">تغییر به پیش‌فرض</button></form>
+                      {% endif %}
+                      <a class="btn btn-sm btn-outline-navy" href="{% url 'accounts:address_edit' address.pk %}">ویرایش</a>
+                      <form method="post" action="{% url 'accounts:address_delete' address.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">حذف</button></form>
+                    </div>
+                  </div>
+                  <div class="small text-muted mb-1">گیرنده: {{ address.recipient_name }} — {{ address.phone_number }}</div>
+                  <div class="small">{{ address.province }}، {{ address.city }}، {{ address.address_line }}{% if address.plate %}، پلاک {{ address.plate }}{% endif %}{% if address.unit %}، واحد {{ address.unit }}{% endif %}</div>
+                  {% if address.notes %}<div class="small mt-1 text-muted">{{ address.notes }}</div>{% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">هنوز آدرسی ثبت نکرده‌اید.</div>
+        {% endif %}
+      </div>
+
+      <div class="fabric-card p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+          <h2 class="h5 mb-0">سفارش‌های من</h2>
+          <a href="{% url 'orders:history' %}" class="btn btn-outline-navy btn-sm">مشاهده همه سفارش‌ها</a>
+        </div>
+
+        {% if orders %}
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr class="text-muted small">
+                  <th>شماره سفارش</th>
+                  <th>تاریخ</th>
+                  <th>مبلغ</th>
+                  <th>وضعیت</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for order in orders %}
+                  <tr>
+                    <td dir="ltr">{{ order.order_number }}</td>
+                    <td>{{ order.created_at|date:"Y/m/d" }}</td>
+                    <td>{{ order.total|floatformat:0 }} تومان</td>
+                    <td><span class="badge bg-light text-dark border">{{ order.get_status_display }}</span></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-muted">هنوز سفارشی ثبت نکرده‌اید.</div>
+        {% endif %}
       </div>
     </div>
   </div>
