@@ -141,7 +141,16 @@ def order_detail_view(request, order_number):
     order = get_object_or_404(
         Order.objects.prefetch_related('items'), order_number=order_number, user=request.user,
     )
-    return render(request, 'orders/order_detail.html', {'order': order})
+    latest_payment = order.payments.order_by('-created_at').first()
+    payment_gateway = (
+        latest_payment.gateway
+        if latest_payment and latest_payment.gateway in {'zarinpal', 'balepay'}
+        else 'zarinpal'
+    )
+    return render(request, 'orders/order_detail.html', {
+        'order': order,
+        'payment_gateway': payment_gateway,
+    })
 
 
 @login_required

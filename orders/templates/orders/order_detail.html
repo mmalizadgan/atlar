@@ -29,7 +29,7 @@
         <div class="d-flex justify-content-between fw-bold"><span>جمع کل</span><span>{{ order.total|format_price }} تومان</span></div>
 
         {% if order.status == 'pending_payment' %}
-          <a href="{% url 'payments:initiate' order.order_number %}" class="btn btn-gold w-100 mt-3">پرداخت</a>
+          <a href="{% url 'payments:initiate_with_gateway' order.order_number payment_gateway %}" class="btn btn-gold w-100 mt-3">پرداخت</a>
         {% endif %}
       </div>
     </div>
