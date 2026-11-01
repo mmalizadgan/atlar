@@ -11,9 +11,6 @@ def normalize_digits(value: str) -> str:
 
 
 class NormalizedDigitsField(forms.CharField):
-    """ارقام فارسی/عربی را قبل از اجرای validatorها به لاتین تبدیل می‌کند.
-    (قبلاً validator روی مقدار خام اجرا می‌شد و «۰۹۱۲...» همیشه رد می‌شد.)"""
-
     def to_python(self, value):
         value = super().to_python(value)
         return ''.join(normalize_digits(value).split())
@@ -36,10 +33,8 @@ class PhoneNumberForm(forms.Form):
     )
 
     def clean_phone_number(self):
-        # ⚠️ اصلاح: نرمال‌سازی ارقام فارسی/عربی + حذف همه‌ی جداکننده‌ها و کاراکترهای کنترلی
         value = normalize_digits(self.cleaned_data['phone_number'])
         value = ''.join(value.split())
-        # فقط رقم؛ اگر کاراکتر غیررقمی تزریق شده باشد، همین‌جا رد می‌شود.
         if not value.isdigit():
             raise forms.ValidationError('شماره موبایل فقط باید رقم باشد.')
         return value
@@ -62,8 +57,6 @@ class OTPVerifyForm(forms.Form):
     )
 
     def clean_code(self):
-        # ⚠️ اصلاح: ارقام فارسی پذیرفته می‌شود ولی فقط رقم مجاز است
-        # (جلوگیری از ارسال کدهای جعلی/کاراکترهای یونیکد به لایه‌ی مقایسه)
         value = normalize_digits(self.cleaned_data['code']).strip()
         if not value.isdigit():
             raise forms.ValidationError('کد تایید فقط باید رقم باشد.')

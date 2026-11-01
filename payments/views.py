@@ -22,7 +22,6 @@ from .models import Payment
 
 logger = logging.getLogger('payments')
 
-# حداکثر تعداد تراکنش «شروع‌شده» برای هر سفارش (ضد پرکردن جدول Payment)
 MAX_OPEN_PAYMENTS_PER_ORDER = 3
 
 
@@ -41,8 +40,6 @@ def initiate_payment_view(request, order_number, gateway='zarinpal'):
     if gateway == 'balepay' and not chat_id:
         return redirect('payments:connect', order_number=order.order_number, gateway='balepay')
 
-    # ⚠️ اصلاح: به‌جای ساختن بی‌نهایت رکورد Payment، تراکنش باز قبلی را
-    # دوباره استفاده می‌کنیم و فقط تا سقف مشخص رکورد جدید می‌سازیم.
     payment = (
         Payment.objects.filter(
             order=order, status=Payment.Status.INITIATED, gateway=gateway, gateway_token=''
@@ -211,16 +208,6 @@ def balepay_payment_status_view(request, order_number):
 @csrf_exempt
 @require_http_methods(['GET', 'POST'])
 def zarinpal_callback_view(request):
-    """
-    ⚠️ اصلاحات مهم در callback درگاه:
-      ۱) idempotent شد — تکرار callback دیگر موجودی را دوباره کسر/سفارش را دوباره
-         «پرداخت‌شده» نمی‌کند (قبلاً هر بار callback، موجودی یک‌بار دیگر کم می‌شد).
-      ۲) با قفل ردیف (select_for_update) → دو callback همزمان عملاً یکی اجرا می‌شود.
-      ۳) مبلغ تاییدشده‌ی درگاه با مبلغ سفارش مقایسه می‌شود (ضد پرداخت ناقص/جعل).
-      ۴) موجودی دیگر اینجا کسر نمی‌شود؛ رزرو در checkout انجام می‌شود.
-         (کد قبلی `item.fabric_id` نداشت → AttributeError و موجودی هیچ‌وقت کم نمی‌شد.)
-      ۵) خطای درگاه دیگر ۵۰۰ نمی‌دهد.
-    """
     token = (request.GET.get('Authority') or request.POST.get('Authority') or '').strip()
     if not token:
         messages.error(request, 'تراکنش پیدا نشد.')
@@ -237,12 +224,10 @@ def zarinpal_callback_view(request):
     order = payment.order
 
     with transaction.atomic():
-        # قفل ردیف: دو callback همزمان فقط یکی‌شان به پردازش می‌رسند.
         payment = Payment.objects.select_for_update().get(pk=payment.pk)
         order = Order.objects.select_for_update().get(pk=order.pk)
 
         if payment.status == Payment.Status.SUCCESS:
-            # قبلاً تایید شده است → فقط ریدایرکت، بدون هیچ تغییر داده‌ای.
             return redirect('orders:success', order_number=order.order_number)
 
         if not result.success:

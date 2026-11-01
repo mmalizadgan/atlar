@@ -21,10 +21,6 @@ def _get_or_create_cart(request):
 
 
 def _parse_quantity(raw_value, default=Decimal('1')):
-    """
-    ⚠️ اصلاح: قبلاً `Decimal('1E+3')` (نماد علمی) پذیرفته می‌شد و مقدار ۱۰۰۰
-    به سبد می‌رفت. حالا: فقط عدد اعشاری ساده، بدون نماد علمی و با سقف مشخص.
-    """
     if raw_value is None:
         return default
     try:
@@ -89,7 +85,6 @@ def add_to_cart_view(request, slug):
 @require_POST
 def update_cart_item_view(request, item_id):
     cart = request.cart
-    # ⚠️ اصلاح: کوئری روی pk، کاربر/سبد فیلتر می‌شود → دستکاری سبد دیگران ممکن نیست.
     item = get_object_or_404(CartItem, pk=item_id, cart=cart)
     quantity = _parse_quantity(request.POST.get('quantity_meters'), default=item.quantity_meters)
     fabric = item.variant.fabric

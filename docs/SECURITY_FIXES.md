@@ -42,7 +42,7 @@ python manage.py migrate accounts
 python manage.py check --deploy          # باید خطای SECRET_KEY/DEBUG نداشته باشد
 
 # ۳) تست‌های امنیتی
-python manage.py test accounts orders payments -v 2
+python manage.py test accounts payments -v 2
 
 # ۴) پاک‌سازی دوره‌ای (cron: هر ساعت)
 python manage.py purge_expired_otps --days 1

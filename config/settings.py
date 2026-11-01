@@ -1,17 +1,3 @@
-"""
-Django settings for the ATLAR project (فروشگاه پارچه مبلی آتلار).
-
-⚠️ این فایل بازنویسی شده است. تغییرات مهم:
-  * SECRET_KEY پیش‌فرض ناامن حذف شد — در production بدون .env بالا نمی‌آید.
-  * DEBUG پیش‌فرض False شد (قبلاً True بود و اگر .env فراموش شود سایت در حالت
-    دیباگ بالا می‌آمد و stack trace + تنظیمات لو می‌رفت).
-  * هدرهای امنیتی (CSP، Referrer-Policy، Permissions-Policy، ...) همیشه فعال شدند.
-  * تنظیمات OTP سخت‌تر شد (۶ رقم، قفل و محدودیت نرخ بر پایه‌ی شماره و IP).
-  * TRUST_PROXY_HEADERS برای تشخیص IP واقعی پشت پروکسی/CDN.
-  * محدودیت حجم آپلود فایل.
-  * تنظیمات LOGGING (بدون لاگ‌کردن کد OTP).
-  * آدرس پنل ادمین از متغیر محیطی خوانده می‌شود.
-"""
 from pathlib import Path
 
 from decouple import config, Csv
@@ -21,7 +7,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # -----------------------------------------------------------------------
 # Core / security
 # -----------------------------------------------------------------------
-# ⚠️ اصلاح: مقدار پیش‌فرض ناامن حذف شد. در production حتماً باید در .env باشد.
 SECRET_KEY = config('SECRET_KEY', default='')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -70,7 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'config.middleware.SecurityHeadersMiddleware',   # ← جدید: CSP و هدرهای امنیتی
+    'config.middleware.SecurityHeadersMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

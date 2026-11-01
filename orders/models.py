@@ -43,7 +43,7 @@ class Order(models.Model):
         DELIVERED = 'delivered', 'تحویل داده‌شده'
         CANCELLED = 'cancelled', 'لغوشده'
 
-    order_number = models.CharField(max_length=20, unique=True, editable=False, blank=True)  # ⚠️ قبلاً 12 بود ولی 14/20 کاراکتر تولید می‌شد → DataError در هر checkout
+    order_number = models.CharField(max_length=20, unique=True, editable=False, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='orders')
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING_PAYMENT)
 
@@ -91,9 +91,6 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_number:
-            # ⚠️ اصلاح: ۱۰ کاراکتر از uuid4 فقط ۴۰ بیت تصادفی است و با یک
-            # IntegrityError (خطای ۵۰۰) تمام می‌شود. حالا ۱۴ کاراکتر (۵۶ بیت)
-            # + تلاش مجدد در برابر تصادم.
             for _ in range(5):
                 candidate = uuid.uuid4().hex[:14].upper()
                 if not Order.objects.filter(order_number=candidate).exists():

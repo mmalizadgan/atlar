@@ -19,11 +19,6 @@ def _calculate_shipping(subtotal):
     return settings_obj.default_shipping_cost
 
 
-# ---------------------------------------------------------------------------
-# ⚠️ اصلاح امنیتی/صحت: رزرو موجودی با قفل ردیف (select_for_update)
-# قبلاً موجودی فقط «چک» می‌شد؛ دو کاربر همزمان می‌توانستند هرکدام ۲۰ متر از
-# موجودیِ ۲۰ متری بخرند (oversell / race condition).
-# ---------------------------------------------------------------------------
 def _reserve_stock(items):
     """
     موجودی را برای آیتم‌های سبد قفل و کسر می‌کند.
@@ -73,7 +68,6 @@ def checkout_view(request):
             shipping_cost = _calculate_shipping(subtotal)
             try:
                 with transaction.atomic():
-                    # موجودی در همان تراکنش و با قفل ردیف کسر می‌شود.
                     out_of_stock = _reserve_stock(list(cart.items_qs))
                     if out_of_stock is not None:
                         raise ValueError(
@@ -102,8 +96,6 @@ def checkout_view(request):
                         )
                         for item in cart.items_qs
                     ])
-                    # سبد همان‌جا خالی می‌شود (قبلاً فقط بعد از پرداخت موفق خالی می‌شد
-                    # و اگر callback درگاه با نشست درستی نمی‌رسید، سبد پر می‌ماند).
                     cart.items.all().delete()
             except ValueError as exc:
                 messages.error(request, str(exc))
