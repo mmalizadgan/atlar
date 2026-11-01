@@ -1,0 +1,13 @@
+{
+  "app": "atlartextile",
+  "port": 80,
+  "build": {
+    "location": "iran"
+  },
+  "disks": [ {
+    "name" : "media",
+    "mountTo" : "media"
+
+  }
+  ]
+}
