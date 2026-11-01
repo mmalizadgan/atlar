@@ -10,8 +10,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='127.0.0.1,localhost,atlartextile.liara.run',
+    cast=Csv(),
+)
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://atlartextile.liara.run',
+    cast=Csv(),
+)
 
 # آدرس مخفی پنل مدیریت (مثلاً ADMIN_URL=xk92-admin/ )
 ADMIN_URL = config('ADMIN_URL', default='admin/')
@@ -238,11 +246,14 @@ ZARINPAL_MERCHANT_ID = config(
     default='3f2504e0-4f89-41d3-9a0c-0305e82c3301',
 )
 ZARINPAL_SANDBOX = config('ZARINPAL_SANDBOX', default=True, cast=bool)
-SITE_BASE_URL = config('SITE_BASE_URL', default='http://127.0.0.1:8000')
+SITE_BASE_URL = config(
+    'SITE_BASE_URL',
+    default='https://atlartextile.liara.run',
+)
 SITE_NAME = 'آتلار'
 
 # -----------------------------------------------------------------------
-# Logging — کد OTP هرگز لاگ نمی‌شود
+# Logging — در حالت توسعه با SMS_PROVIDER=console، کد OTP ممکن است لاگ شود.
 # -----------------------------------------------------------------------
 LOGGING = {
     'version': 1,

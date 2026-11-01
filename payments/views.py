@@ -25,6 +25,14 @@ logger = logging.getLogger('payments')
 MAX_OPEN_PAYMENTS_PER_ORDER = 3
 
 
+def _cancel_pending_order(order):
+    if order.status != Order.Status.PENDING_PAYMENT:
+        return
+    release_order_stock(order)
+    order.status = Order.Status.CANCELLED
+    order.save(update_fields=['status'])
+
+
 @login_required
 @require_http_methods(['GET', 'POST'])
 def initiate_payment_view(request, order_number, gateway='zarinpal'):
@@ -234,10 +242,7 @@ def zarinpal_callback_view(request):
             payment.status = Payment.Status.FAILED
             payment.raw_response = result.raw_response
             payment.save(update_fields=['status', 'raw_response'])
-            # موجودی رزروشده به انبار برمی‌گردد و سفارش قابل ثبت مجدد است.
-            release_order_stock(order)
-            order.status = Order.Status.CANCELLED
-            order.save(update_fields=['status'])
+            _cancel_pending_order(order)
             messages.error(
                 request,
                 result.message or 'پرداخت ناموفق بود. می‌تونی سفارش رو دوباره ثبت کنی.',
@@ -250,9 +255,7 @@ def zarinpal_callback_view(request):
             payment.raw_response = {'error': 'amount_mismatch',
                                     'gateway_amount': result.amount}
             payment.save(update_fields=['status', 'raw_response'])
-            release_order_stock(order)
-            order.status = Order.Status.CANCELLED
-            order.save(update_fields=['status'])
+            _cancel_pending_order(order)
             logger.error(
                 'amount mismatch for order %s (expected=%s got=%s)',
                 order.order_number, payment.amount, result.amount,
